@@ -4,24 +4,24 @@ Created on 27/06/2010
 @author: Hansen
 '''
 
-import gtk
+from gi.repository import Gtk
 
 def FileChooser(window, folder, mode):
     if mode == 'save':
         title = 'Salvar arquivo...'
-        action = gtk.FILE_CHOOSER_ACTION_SAVE
-        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_SAVE, gtk.RESPONSE_OK)
+        action = Gtk.FileChooserAction.SAVE
+        buttons = (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_SAVE, Gtk.ResponseType.OK)
     else:
         title = 'Abrir Arquivo...'
-        action = gtk.FILE_CHOOSER_ACTION_OPEN
-        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK)
+        action = Gtk.FileChooserAction.OPEN
+        buttons = (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
 
-    chooser = gtk.FileChooserDialog(title = title,
+    chooser = Gtk.FileChooserDialog(title = title,
                                     parent = window,
                                     action = action,
                                     buttons = buttons)
 
-    chooser.set_position(gtk.WIN_POS_CENTER_ALWAYS)
+    chooser.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
     chooser.set_do_overwrite_confirmation(True)
 
     chooser.set_current_folder(folder)
@@ -29,7 +29,7 @@ def FileChooser(window, folder, mode):
     filename = None
 
     response = chooser.run()
-    if response == gtk.RESPONSE_OK:
+    if response == Gtk.ResponseType.OK:
         filename = chooser.get_filename()
     chooser.destroy()
 

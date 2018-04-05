@@ -61,7 +61,7 @@ class Decode:
             self.header['CGLP'].update({'size':struct.unpack('<L', self.file.read(4))[0]})
             self.header['CGLP'].update({'width':struct.unpack('B', self.file.read(1))[0]})
             self.header['CGLP'].update({'height':struct.unpack('B', self.file.read(1))[0]})
-            self.header['CGLP'].update({'lenght':struct.unpack('<H', self.file.read(2))[0]})
+            self.header['CGLP'].update({'length':struct.unpack('<H', self.file.read(2))[0]})
             self.file.read(2)
             self.header['CGLP'].update({'bpp':struct.unpack('<H', self.file.read(2))[0]})
             self.header['CGLP'].update({'data':self.file.tell()})
@@ -89,10 +89,10 @@ class Decode:
         shift= [7,6,5,4,3,2,1,0]
 
         font = []
-        for x in range(self.header['CGLP']['size'] / self.header['CGLP']['lenght']):
+        for x in range(self.header['CGLP']['size'] / self.header['CGLP']['length']):
             letter = []
-            bitmap = ''
-            char = self.file.read(self.header['CGLP']['lenght'])
+            bitmap = []
+            char = self.file.read(self.header['CGLP']['length'])
             # Bits
             for s in char:
                 s = struct.unpack('B', s)[0]
@@ -102,12 +102,13 @@ class Decode:
             for byte in letter:
                 byte = list(byte)
                 while len(byte) % 8 != 0:
-                    byte.append(0)
+                    byte.append(0)              
+                bitmap += map(lambda x: x*255 , byte)
                 # Separa em grupos de 8, para formar os bytes
-                group = zip(*[iter(byte)]*8)
-                lines = map(lambda e: reduce(lambda x,y:(x << 1) + y, reversed(e)), group)
-                for data in lines:
-                    bitmap += struct.pack('B',data)
+                # group = zip(*[iter(byte)]*8)
+                # lines = map(lambda e: reduce(lambda x,y:(x << 1) + y, reversed(e)), group)
+                # for data in lines:
+                    # bitmap += struct.pack('B',data)
             font.append(bitmap)
         return font
 

@@ -23,12 +23,11 @@ __version__ = "v1.0.0"
 import collections
 import re
 
-import gtk
-import gobject
+from gi.repository import Gtk, Gdk, GObject
 
 WHITESPACE = (' ', '\t')
 
-class Writer(gtk.TextBuffer):
+class Writer(Gtk.TextBuffer):
 
     maxlen = 50
 
@@ -41,7 +40,7 @@ class Writer(gtk.TextBuffer):
         return bool(self.fst_stack)
 
     def __init__(self):
-        gtk.TextBuffer.__init__(self)
+        Gtk.TextBuffer.__init__(self)
 
         self.connect('insert-text', self.on_insert_text)
         self.connect('delete-range', self.on_delete_range)
@@ -58,16 +57,16 @@ class Writer(gtk.TextBuffer):
         start = self.get_iter_at_line(index)
         end = start.copy()
         end.forward_to_line_end()
-        return self.get_text(start, end, False)
+        return self.get_text(start, end, True)
 
     def get_text_init(self, matches):
-        ''' Procura por uma linha que coincida com os padrÃµes informados pelo usuÃ¡rio.
-        Essa linha serÃ¡ o pivÃ´ do bloco (a partir da onde o texto serÃ¡ lido.'''
+        ''' Procura por uma linha que coincida com os padrões informados pelo usuário.
+        Essa linha será o pivô do bloco (a partir da onde o texto será lido.'''
 
         iter = self.get_iter_at_mark(self.get_insert())
         index = iter.get_line() #Indice da linha atual no buffer
 
-        while index >= 0: # Caso extremo, nÃ£o ter um pivÃ´ no arquivo. O Texto Ã© lido a partir do comeÃ§o
+        while index >= 0: # Caso extremo, não ter um pivô no arquivo. O Texto é lido a partir do começo
             line = self.get_line(index).strip('\r\n')
             if any([re.match(pattern, line) for pattern in matches]):
                 break
@@ -94,7 +93,7 @@ class Writer(gtk.TextBuffer):
 
         if not self.not_undoable_action:
             return
-        # Quando um novo texto Ã© adicionado ao sec_stack, o fst_stack deve ser reiniciado
+        # Quando um novo texto é adicionado ao sec_stack, o fst_stack deve ser reiniciado
         self.fst_stack = collections.deque(maxlen = Writer.maxlen)
 
         current_insert = UndoableInsert(iter, text, lenght)
@@ -218,7 +217,7 @@ class UndoableInsert(object):
 
 class UndoableDelete(object):
     def __init__(self, buffer, start_iter, end_iter):
-        self.text = buffer.get_text(start_iter, end_iter)
+        self.text = buffer.get_text(start_iter, end_iter, True)
         self.start = start_iter.get_offset()
         self.end = end_iter.get_offset()
         insert_iter = buffer.get_iter_at_mark(buffer.get_insert())

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: windows-1252 -*-
 
 # editor.py
 
@@ -23,12 +23,12 @@ __version__ = "v1.0.0"
 import re
 import os
 import sys
+import glob
 
-import pygtk
-pygtk.require('2.0')
+import gi
+gi.require_version('Gtk', '3.0')
 
-import gtk
-import pango
+from gi.repository import Gtk, Gdk, Pango, GdkPixbuf
 
 import dialogs
 import drawer
@@ -37,7 +37,15 @@ from configobj import ConfigObj
 
 fontDescription = 'monospace 10'
 
-# MELHORAR O __init__ DA FUN√á√ÉO!!!
+# MELHORAR O __init__ DA FUN«√O!!!
+def scandirs(path):
+    files = []
+    for currentFile in glob.glob( os.path.join(path, '*') ):
+        if os.path.isdir(currentFile):
+            files += scandirs(currentFile)
+        else:
+            files.append(currentFile)
+    return files
 
 class Main:
 
@@ -52,13 +60,13 @@ class Main:
 
         self.wtree_path = os.path.join(self.local_path, 'editor.ui')
 
-        self.builder = gtk.Builder()
+        self.builder = Gtk.Builder()
         self.builder.add_from_file(self.wtree_path)
         self.builder.connect_signals(self)
 
         self.main_window = self.builder.get_object('main_window')
         self.main_window.connect('delete-event', self.on_main_window_delete_event)
-        self.main_window.connect('destroy', gtk.main_quit)
+        self.main_window.connect('destroy', Gtk.main_quit)
 
         self.treeview = self.builder.get_object('treeview')
         self.treeview.connect('row-activated', self.on_treeview_row_activated)
@@ -81,10 +89,10 @@ class Main:
 
         self.teste = self.builder.get_object('viewport3')
         self.teste2 = self.builder.get_object('textview1')
-        self.teste2.modify_font(pango.FontDescription(fontDescription))
+        self.teste2.modify_font(Pango.FontDescription(fontDescription))
 
         self.teste3 = self.builder.get_object('textview2')
-        self.teste3.modify_font(pango.FontDescription(fontDescription))
+        self.teste3.modify_font(Pango.FontDescription(fontDescription))
         self.buf = self.teste3.get_buffer()
 
         self.panel_separator = self.builder.get_object("hpaned1")
@@ -93,6 +101,7 @@ class Main:
                                           bg = os.path.join(self.config_path, self.main_config['BackgroundFolder']),
                                           font = os.path.join(self.config_path, self.main_config['FontFolder']))
 
+        self.drawing_area.mask_event( Gdk.EventMask.BUTTON_PRESS_MASK )                                          
 
         self.writing_area = writer.Writer()
 
@@ -102,7 +111,7 @@ class Main:
         self.writing_area.connect('mark-set', self.on_writing_area_mark_set)
         self.s_id_1 = self.writing_area.connect('modified-changed', self.on_writing_area_modified_changed)
 
-        self.drawing_area.connect('expose-event', self.on_drawing_area_expose_event)
+        self.drawing_area.connect('draw', self.on_drawing_area_expose_event)
         self.drawing_area.show()
 
         self.teste.add(self.drawing_area)
@@ -113,9 +122,9 @@ class Main:
     def on_main_window_delete_event(self, widget, event):
         return False
 
-    def on_hpaned1_expose_event(self, widget, event):
-        alloc = widget.get_allocation()        
-        widget.set_position(alloc.width/2)
+    # def on_hpaned1_expose_event(self, widget, event):
+        # alloc = widget.get_allocation()        
+        # widget.set_position(alloc.width/2)
 
     def __load_config(self):
         filename = self.project_dialog.run()
@@ -134,9 +143,11 @@ class Main:
 
     def __init_file_list(self):
         path = os.path.join(self.config_path, self.main_config['TextFolder'])
+        self.files_list = filter(lambda x: x.__contains__('.txt'), scandirs(path))   
 
-        for file in os.listdir(path):
-            iter = self.file_list.append([gtk.gdk.pixbuf_new_from_file('Pixmaps/text-x-generic.png'), file, None])
+        for f in self.files_list:
+            head, tail  = os.path.split(f)
+            iter = self.file_list.append([GdkPixbuf.Pixbuf.new_from_file('Pixmaps/text-x-generic.png'), tail, None])
             self.file_list_iter.append(iter)
 
         if not self.file_list_iter:
@@ -154,13 +165,14 @@ class Main:
 
         # Se houver um arquivo aberto, adicionar o buffer de texto dele no stack
         if hasattr(self, 'filename'):
-            text = self.writing_area.get_text(self.writing_area.get_start_iter(),self.writing_area.get_end_iter())
+            text = self.writing_area.get_text(self.writing_area.get_start_iter(),self.writing_area.get_end_iter(), True)
             self.file_stack.update({self.filename:text})
 
         self.file_index = treeview.get_cursor()[0][0]
-        path = os.path.join(self.config_path, self.main_config['TextFolder'])
-
-        self.filename = os.path.join(path, os.listdir(path)[self.file_index])
+        # path = os.path.join(self.config_path, self.main_config['TextFolder'])
+        # files = filter(lambda x: x.__contains__('.txt'), scandirs(path))
+        
+        self.filename = self.files_list[self.file_index]
 
         if self.filename in self.file_stack:
             text = self.file_stack[self.filename]
@@ -174,11 +186,14 @@ class Main:
 
         self.writing_area.clear_stacks()
 
-        name = os.listdir(path)[self.file_index]
+        head,tail = os.path.split(self.files_list[self.file_index])
 
         path = os.path.join(self.config_path, self.main_config['OriginalFolder'])
-        name = os.path.join(path, name)
+        name = os.path.join(path, tail)
 
+        name = self.files_list[self.file_index]
+        name = name.replace( self.main_config['TextFolder'] , self.main_config['OriginalFolder'] )
+        
         file = open(name, 'r')
         text = unicode(file.read().decode(self.main_config['Encoding']))
         file.close()
@@ -193,15 +208,17 @@ class Main:
             self.drawing_area.refresh()
 
 
-    def on_drawing_area_expose_event(self, widget, event):
-        self.drawing_area.render_background()
+    def on_drawing_area_expose_event(self, widget, context):
+        self.drawing_area.render_background(context)
         index = self.writing_area.get_text_init(self.main_config['Matches'])
 
         while True:
             line = self.writing_area.get_line(index)
             if not line:
-                break # Se o √≠ndice for maior que o total de linhas do texto
+                break # Se o Ìndice for maior que o total de linhas do texto
 
+            line = line.decode("utf-8")
+                
             if line[0] in ('\r', '\n'):
                 line = ' '
 
@@ -210,12 +227,12 @@ class Main:
 
             matches = [re.match(pattern, line) for pattern in self.main_config['Matches']]
             if any(matches):
-                break #Se o padr√£o for encontrado, para de imprimir
-            elif not self.drawing_area.render(line):
-                break # Se n√£o foi poss√≠vel desenhar a linha
+                break #Se o padr„o for encontrado, para de imprimir
+            elif not self.drawing_area.render(context, line):
+                break # Se n„o foi possÌvel desenhar a linha
             else:
                 index += 1
-        # Reseta os valores x,y da √°rea de desenho
+        # Reseta os valores x,y da ·rea de desenho
         self.drawing_area.xpos = self.drawing_area.cfg_in_use['ScreenXPos']
         self.drawing_area.ypos = self.drawing_area.cfg_in_use['ScreenYPos']
 
@@ -227,16 +244,18 @@ class Main:
     def on_writing_area_modified_changed(self, buffer):
         if self.file_index != None and buffer.get_modified():
             iter = self.file_list_iter[self.file_index]
-            self.file_list.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file('Pixmaps/software-update-urgent.png'))
+            self.file_list.set_value(iter, 2, GdkPixbuf.Pixbuf.new_from_file('Pixmaps/software-update-urgent.png'))
 
     def on_menu_save_activate(self, widget):
         if not hasattr(self, 'filename'):
             return
 
-        text = self.writing_area.get_text(self.writing_area.get_start_iter(),self.writing_area.get_end_iter())
+        text = self.writing_area.get_text(self.writing_area.get_start_iter(),self.writing_area.get_end_iter(), True)
 
         file = open(self.filename, 'w')
-        file.write(unicode(text).encode(self.main_config['Encoding']))
+        #file.write(unicode(text).encode(self.main_config['Encoding']))
+        a = text.decode("utf-8").encode(self.main_config['Encoding'])
+        file.write(a)
         file.close()
 
         iter = self.file_list_iter[self.file_index]
@@ -260,12 +279,13 @@ def Run():
     #import psyco
     #psyco.full()
 
-    gtk.gdk.threads_init()
-    gtk.gdk.threads_enter()
-    try:
-        gtk.main()
-    finally:
-        gtk.gdk.threads_leave()
+    # gtk.gdk.threads_init()
+    # gtk.gdk.threads_enter()
+    # try:
+        # gtk.main()
+    # finally:
+        # gtk.gdk.threads_leave()
+    Gtk.main()        
 
 if __name__ == '__main__':
     Main()
