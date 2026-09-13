@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layton Project CAT Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-body: #f3f4f6;
+            --bg-panel: #ffffff;
+            --border-color: #e5e7eb;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --primary-blue: #3b82f6;
+            --active-blue-bg: #eff6ff;
+            --active-blue-border: #bfdbfe;
+            --button-dark: #374151;
+            --success-green: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Navbar */
+        .navbar {
+            height: 60px;
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-center select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #f9fafb;
+            font-size: 14px;
+            outline: none;
+            color: var(--text-primary);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-secondary);
+        }
+
+        .nav-right i {
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: #f9fafb;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 12px;
+        }
+
+        .search-bar input {
+            border: none;
+            background: none;
+            outline: none;
+            margin-left: 8px;
+            font-size: 13px;
+            width: 200px;
+        }
+
+        /* Main Layout */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Mini Sidebar Icons */
+        .sidebar-icons {
+            width: 50px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 15px;
+            gap: 20px;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-icons i {
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .sidebar-icons i.active {
+            color: var(--primary-blue);
+        }
+
+        /* Project Files Sidebar */
+        .sidebar-files {
+            width: 240px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .file-tree {
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .file-item {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .file-item.active {
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+
+        .file-item.indent {
+            margin-left: 20px;
+        }
+
+        /* Editor Column */
+        .editor-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-body);
+            border-right: 1px solid var(--border-color);
+            min-width: 400px;
+        }
+
+        .editor-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Segment Cards */
+        .segment-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .segment-card.active {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 1px var(--primary-blue);
+        }
+
+        .segment-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 15px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            background-color: #fafafa;
+        }
+        
+        .segment-header .status {
+            color: var(--success-green);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .segment-body {
+            padding: 15px;
+        }
+
+        .source-text {
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toolbar i {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .target-textarea {
+            width: 100%;
+            min-height: 60px;
+            border: none;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.5;
+            outline: none;
+            color: var(--text-primary);
+            background-color: transparent;
+        }
+
+        .segment-card.active .target-area-wrapper {
+            background-color: var(--active-blue-bg);
+            border: 1px solid var(--active-blue-border);
+            border-radius: 6px;
+            padding: 10px;
+            margin: -5px;
+        }
+
+        .segment-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-top: 1px solid var(--border-color);
+            background-color: #fafafa;
+            font-size: 12px;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tag {
+            background-color: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tag.tm { background-color: #fef08a; color: #854d0e; }
+        .tag.mt { background-color: #bbf7d0; color: #166534; }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-dark {
+            background-color: var(--button-dark);
+            color: white;
+        }
+
+        /* Preview Column */
+        .preview-column {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-body);
+            min-width: 400px;
+        }
+
+        .preview-content {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .game-scene {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 16/9;
+            background-color: #4b5563; /* Placeholder for game image */
+            background-image: linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border-radius: 8px;
+            border: 4px solid #1f2937;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        /* Simulate Layton Character (Placeholder) */
+        .character-placeholder {
+            position: absolute;
+            bottom: 0;
+            left: 20px;
+            width: 150px;
+            height: 200px;
+            background-color: #d97706;
+            border-radius: 100px 100px 0 0;
+            opacity: 0.8;
+        }
+
+        /* Game Text Box Simulation */
+        .dialogue-box {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            background-color: rgba(245, 235, 220, 0.95);
+            border: 3px solid #78350f;
+            border-radius: 8px;
+            padding: 20px;
+            padding-top: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .dialogue-name {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background-color: #d97706;
+            color: white;
+            padding: 4px 15px;
+            border: 3px solid #78350f;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+        }
+
+        .dialogue-text {
+            font-size: 18px;
+            color: #1f2937;
+            line-height: 1.4;
+            font-family: 'Georgia', serif;
+        }
+
+        .highlighted-text {
+            background-color: #bfdbfe;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="nav-left">
+            <i class="fa-solid fa-gamepad"></i>
+            <span>LAYTON PROJECT CAT TOOL</span>
+        </div>
+        <div class="nav-center">
+            <select>
+                <option>English (en) &rarr; Portuguese (pt-BR)</option>
+            </select>
+        </div>
+        <div class="nav-right">
+            <i class="fa-regular fa-sun"></i>
+            <i class="fa-regular fa-moon"></i>
+            <i class="fa-regular fa-circle-question"></i>
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Search files and segments">
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <!-- Mini Sidebar -->
+        <div class="sidebar-icons">
+            <i class="fa-regular fa-file active"></i>
+            <i class="fa-solid fa-list-ul"></i>
+            <i class="fa-solid fa-code-branch"></i>
+            <i class="fa-solid fa-gear" style="margin-top: auto; margin-bottom: 20px;"></i>
+        </div>
+
+        <!-- Project Files -->
+        <div class="sidebar-files">
+            <div class="panel-header">
+                PROJECT FILES
+                <i class="fa-solid fa-chevron-up"></i>
+            </div>
+            <div class="file-tree">
+                <div class="file-item"><i class="fa-regular fa-folder-open"></i> en/ev</div>
+                <div class="file-item indent"><i class="fa-regular fa-file-lines"></i> ev_t10.plz.txt</div>
+                <div class="file-item indent active"><i class="fa-regular fa-file-lines"></i> ev_t11.plz.txt</div>
+                <div class="file-item indent"><i class="fa-regular fa-file-lines"></i> ev_t12.plz.txt</div>
+                <div class="file-item indent"><i class="fa-regular fa-file-lines"></i> ev_t13.plz.txt</div>
+                <div class="file-item"><i class="fa-regular fa-folder"></i> texts/event/ev_110.plz.txt</div>
+                <div class="file-item"><i class="fa-regular fa-folder"></i> texts/event/ev_117.plz.txt</div>
+            </div>
+        </div>
+
+        <!-- Translation Editor -->
+        <div class="editor-column">
+            <div class="panel-header">
+                TRANSLATION EDITOR
+            </div>
+            <div class="editor-content">
+                
+                <!-- Active Segment Card -->
+                <div class="segment-card active">
+                    <div class="segment-header">
+                        <span>#SEGMENT 3</span>
+                        <span class="status">Ready for Review <i class="fa-solid fa-circle-check"></i></span>
+                    </div>
+                    <div class="segment-body">
+                        <div class="source-text">
+                            Professor, we never stay in places as nice as this. Can't we look around a little longer?
+                        </div>
+                        <div class="target-area-wrapper">
+                            <div class="toolbar">
+                                <i class="fa-solid fa-bold"></i>
+                                <i class="fa-solid fa-italic"></i>
+                                <i class="fa-solid fa-eraser"></i>
+                                <div style="flex:1"></div>
+                                <i class="fa-solid fa-minus"></i>
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <textarea class="target-textarea">Professor, nós nunca estivemos num lugar tão legal quanto este. Podemos dar uma olhada por mais um tempo?</textarea>
+                        </div>
+                    </div>
+                    <div class="segment-footer">
+                        <div class="tags">
+                            <span class="tag tm">TM</span>
+                            <span class="tag mt">MT</span>
+                        </div>
+                        <div class="actions">
+                            <span style="color: var(--text-secondary);">105 chars</span>
+                            <span style="cursor: pointer; color: var(--text-secondary);"><i class="fa-regular fa-floppy-disk"></i> Save</span>
+                            <button class="btn btn-outline"><i class="fa-regular fa-eye"></i> Preview in Context</button>
+                            <button class="btn btn-dark">Submit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inactive Segment Card -->
+                <div class="segment-card">
+                    <div class="segment-header">
+                        <span>#SEGMENT 4</span>
+                        <span class="status">Ready for Review <i class="fa-solid fa-circle-check"></i></span>
+                    </div>
+                    <div class="segment-body">
+                        <div class="source-text">
+                            Quite so, Luke. Every fixture and fitting is the very height of decadence.
+                        </div>
+                        <textarea class="target-textarea">É por aí mesmo, Luke. O luxo transparece em cada detalhe.</textarea>
+                    </div>
+                    <div class="segment-footer">
+                        <div class="tags">
+                            <span class="tag mt">MT</span>
+                        </div>
+                        <div class="actions">
+                            <span style="color: var(--text-secondary);">61 chars</span>
+                            <button class="btn btn-outline"><i class="fa-regular fa-eye"></i> Preview in Context</button>
+                            <button class="btn btn-dark">Submit</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Live Scene Preview -->
+        <div class="preview-column">
+            <div class="panel-header">
+                LIVE SCENE PREVIEW
+                <div style="display: flex; gap: 15px; font-size: 14px; color: var(--text-secondary);">
+                    <select style="border:1px solid #ddd; border-radius: 4px; padding: 2px 5px; outline:none;">
+                        <option>Current Scene (Reading Room)</option>
+                    </select>
+                    <i class="fa-solid fa-up-down-left-right" style="cursor:pointer"></i>
+                    <i class="fa-solid fa-expand" style="cursor:pointer"></i>
+                </div>
+            </div>
+            <div class="preview-content">
+                
+                <div class="game-scene">
+                    <div class="character-placeholder"></div>
+                    
+                    <div class="dialogue-box">
+                        <div class="dialogue-name">Layton</div>
+                        <div class="dialogue-text">
+                            <span class="highlighted-text">Professor, nós nunca estivemos num lugar tão legal quanto este. Podemos dar uma olhada por mais um tempo?</span>
+                            <i class="fa-solid fa-pen" style="position:absolute; right: 15px; bottom: 15px; color: #78350f; font-size:14px;"></i>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

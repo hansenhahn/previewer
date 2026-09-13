@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { apiUrl, atlasImageUrl } from "./api";
+import { apiUrl, atlasImageUrl, fileUrl } from "./api";
 
 describe("helpers de URL", () => {
   it("monta a URL do atlas", () => {
@@ -17,5 +17,14 @@ describe("helpers de URL", () => {
 
   it("monta a URL base da API", () => {
     expect(apiUrl("/projects")).toBe("/api/projects");
+  });
+
+  it("monta a URL do arquivo por variante", () => {
+    expect(fileUrl("abc", "texts/cap01.txt")).toBe(
+      "/api/projects/abc/files/texts/cap01.txt",
+    );
+    expect(fileUrl("abc", "texts/cap01.txt", "original")).toBe(
+      "/api/projects/abc/files/texts/cap01.txt?variant=original",
+    );
   });
 });

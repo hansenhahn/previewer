@@ -1,0 +1,21 @@
+/* Ponte entre os tokens da biblioteca e os nossos --pv-*.
+   Este é o único lugar (junto de kit-*.ts) que conhece a biblioteca.
+   Para trocar de biblioteca, troque por um theme-<lib>.css equivalente. */
+@import "@awesome.me/webawesome/dist/styles/webawesome.css";
+
+:root,
+[data-theme] {
+  --wa-font-family-body: var(--pv-font-family);
+  --wa-font-family-heading: var(--pv-font-family);
+  --wa-font-family-code: var(--pv-font-family-mono);
+  --wa-border-radius-s: var(--pv-radius-s);
+  --wa-border-radius-m: var(--pv-radius-m);
+
+  --wa-color-surface-default: var(--pv-color-surface);
+  --wa-color-surface-raised: var(--pv-color-surface);
+  --wa-color-text-normal: var(--pv-color-text);
+
+  --wa-color-brand-fill-loud: var(--pv-color-brand);
+  --wa-color-brand-on-loud: var(--pv-color-brand-contrast);
+  --wa-color-focus: var(--pv-color-brand);
+}

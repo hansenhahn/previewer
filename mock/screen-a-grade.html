@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mock tela A - galeria em grade</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; font-size: 14px; color: #1f2937; background: #eef0f3; height: 100vh; }
+  .backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); display: flex; align-items: center; justify-content: center; }
+  .dialog { width: min(760px, 92vw); max-height: 86vh; display: flex; flex-direction: column; background: #fff; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.35); overflow: hidden; }
+  .head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #e5e7eb; }
+  .head h2 { margin: 0; font-size: 15px; }
+  .head .x { border: 0; background: transparent; font-size: 18px; color: #6b7280; cursor: pointer; }
+  .body { padding: 16px 18px; overflow: auto; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; cursor: pointer; background: #fff; text-align: left; padding: 0; }
+  .card.active { border-color: #2563eb; box-shadow: 0 0 0 2px #2563eb33; }
+  .thumb { height: 96px; background: #334155; image-rendering: pixelated; position: relative; }
+  .thumb.t1 { background: linear-gradient(135deg,#8a6d3b,#c9a15a); }
+  .thumb.t2 { background: linear-gradient(135deg,#2f5d50,#6aa892); }
+  .thumb.t3 { background: linear-gradient(135deg,#3b4a6b,#7f93c4); }
+  .thumb.t4 { background: linear-gradient(135deg,#6b3b3b,#c47f7f); }
+  .thumb.t5 { background: linear-gradient(135deg,#4a4a4a,#9aa4ad); }
+  .thumb.t6 { background: linear-gradient(135deg,#5d4a2f,#b08a4f); }
+  .card .name { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; font-weight: 500; }
+  .check { color: #2563eb; }
+  .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid #e5e7eb; }
+  .btn { border: 1px solid #d6dade; background: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+  .btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="backdrop">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Escolher tela">
+    <div class="head"><h2>Escolher tela</h2><button class="x">×</button></div>
+    <div class="body">
+      <div class="grid">
+        <button class="card active"><div class="thumb t1"></div><div class="name">Textos Normais <span class="check">✓</span></div></button>
+        <button class="card"><div class="thumb t2"></div><div class="name">Páginas do Diário</div></button>
+        <button class="card"><div class="thumb t3"></div><div class="name">Enigmas</div></button>
+        <button class="card"><div class="thumb t4"></div><div class="name">Comentários</div></button>
+        <button class="card"><div class="thumb t5"></div><div class="name">Perfis</div></button>
+        <button class="card"><div class="thumb t6"></div><div class="name">Nomes</div></button>
+      </div>
+    </div>
+    <div class="foot"><button class="btn">Cancelar</button><button class="btn primary">Aplicar</button></div>
+  </div>
+</div>
+</body>
+</html>

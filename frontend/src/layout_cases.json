@@ -103,6 +103,18 @@
         "overflow_horizontal": false,
         "overflow_vertical": true
       }
+    },
+    {
+      "name": "para_na_quebra",
+      "matches": ["^#"],
+      "tags": [],
+      "cursor_line": 0,
+      "text": "#A\nB\n#C\nD",
+      "expected": {
+        "glyphs": [{ "codepoint": 66, "x": 8, "y": 16 }],
+        "overflow_horizontal": false,
+        "overflow_vertical": false
+      }
     }
   ]
 }

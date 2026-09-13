@@ -62,8 +62,12 @@ def layout(text: str, font: Font, config: ScreenConfig, cursor_line: int = 0) ->
             overflow_vertical = True
             break
 
+        stripped = _strip_tags(line, config.tags)
+        if config.matches and any(re.match(pattern, stripped) for pattern in config.matches):
+            break
+
         x = config.x_pos
-        for char in _strip_tags(line, config.tags):
+        for char in stripped:
             codepoint = ord(char)
             glyph = font.glyph(codepoint)
             if glyph is None:

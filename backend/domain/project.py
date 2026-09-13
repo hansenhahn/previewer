@@ -32,6 +32,12 @@ class Texts:
 
 
 @dataclass(frozen=True, slots=True)
+class Segments:
+    start: tuple[str, ...] = ()
+    end: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class ProjectManifest:
     name: str
     encoding: str
@@ -41,6 +47,7 @@ class ProjectManifest:
     screens: tuple[Screen, ...] = ()
     tags: tuple[str, ...] = ()
     matches: tuple[str, ...] = ()
+    segments: Segments | None = None
     version: int = 1
     format: str = FORMAT
 
@@ -75,6 +82,11 @@ class ProjectManifest:
             ],
             "tags": list(self.tags),
             "matches": list(self.matches),
+            "segments": (
+                {"start": list(self.segments.start), "end": list(self.segments.end)}
+                if self.segments is not None
+                else None
+            ),
         }
 
 
@@ -109,6 +121,18 @@ def _assets(mapping: dict, key: str) -> tuple[Asset, ...]:
             raise ManifestError(f"item inválido em {key}")
         assets.append(Asset(_require_text(item, "name"), _require_text(item, "path")))
     return tuple(assets)
+
+
+def _segments(mapping: dict) -> Segments | None:
+    value = mapping.get("segments")
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ManifestError("campo inválido: segments deve ser um objeto")
+    return Segments(
+        start=_string_list(value, "start"),
+        end=_string_list(value, "end"),
+    )
 
 
 def _screens(mapping: dict) -> tuple[Screen, ...]:
@@ -185,6 +209,7 @@ def parse_manifest(data: bytes) -> ProjectManifest:
         screens=screens,
         tags=_string_list(document, "tags"),
         matches=_string_list(document, "matches"),
+        segments=_segments(document),
         version=version,
         format=FORMAT,
     )

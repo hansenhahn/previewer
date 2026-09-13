@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mock tela B - master-detail</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; font-size: 14px; color: #1f2937; background: #eef0f3; height: 100vh; }
+  .backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); display: flex; align-items: center; justify-content: center; }
+  .dialog { width: min(820px, 94vw); max-height: 86vh; display: flex; flex-direction: column; background: #fff; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.35); overflow: hidden; }
+  .head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #e5e7eb; }
+  .head h2 { margin: 0; font-size: 15px; }
+  .head .x { border: 0; background: transparent; font-size: 18px; color: #6b7280; cursor: pointer; }
+  .split { display: flex; flex: 1; min-height: 0; }
+  .preview { flex: 1; padding: 18px; background: #f3f4f6; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; }
+  .screen { width: 320px; height: 240px; border-radius: 6px; border: 3px solid #1f2937; background: linear-gradient(135deg,#8a6d3b,#c9a15a); image-rendering: pixelated; }
+  .preview .caption { font-weight: 600; }
+  .list { width: 300px; border-left: 1px solid #e5e7eb; overflow: auto; padding: 8px; }
+  .item { display: flex; align-items: center; gap: 10px; width: 100%; border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 8px; cursor: pointer; text-align: left; }
+  .item:hover { background: #f3f4f6; }
+  .item.active { border-color: #2563eb; background: #eff6ff; }
+  .mini { width: 44px; height: 33px; border-radius: 3px; border: 1px solid #d6dade; image-rendering: pixelated; background: #334155; }
+  .mini.m1 { background: linear-gradient(135deg,#8a6d3b,#c9a15a); }
+  .mini.m2 { background: linear-gradient(135deg,#2f5d50,#6aa892); }
+  .mini.m3 { background: linear-gradient(135deg,#3b4a6b,#7f93c4); }
+  .mini.m4 { background: linear-gradient(135deg,#6b3b3b,#c47f7f); }
+  .mini.m5 { background: linear-gradient(135deg,#4a4a4a,#9aa4ad); }
+  .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid #e5e7eb; }
+  .btn { border: 1px solid #d6dade; background: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+  .btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="backdrop">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Escolher tela">
+    <div class="head"><h2>Escolher tela</h2><button class="x">×</button></div>
+    <div class="split">
+      <div class="preview">
+        <div class="screen"></div>
+        <div class="caption">Textos Normais · fontevent · 9,141</div>
+      </div>
+      <div class="list">
+        <button class="item active"><span class="mini m1"></span>Textos Normais</button>
+        <button class="item"><span class="mini m2"></span>Páginas do Diário</button>
+        <button class="item"><span class="mini m3"></span>Enigmas</button>
+        <button class="item"><span class="mini m4"></span>Comentários</button>
+        <button class="item"><span class="mini m5"></span>Perfis</button>
+        <button class="item"><span class="mini m1"></span>Nomes</button>
+      </div>
+    </div>
+    <div class="foot"><button class="btn">Cancelar</button><button class="btn primary">Aplicar</button></div>
+  </div>
+</div>
+</body>
+</html>

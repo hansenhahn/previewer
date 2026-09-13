@@ -113,3 +113,22 @@ def test_rejects_invalid_screen_coordinate():
     document["screens"][0]["x"] = "oito"
     with pytest.raises(ManifestError):
         parse_manifest(dump(document))
+
+
+def test_parses_segments():
+    document = valid_document()
+    document["segments"] = {"start": ["^<d>"], "end": ["^</d>"]}
+    manifest = parse_manifest(dump(document))
+    assert manifest.segments.start == ("^<d>",)
+    assert manifest.segments.end == ("^</d>",)
+
+
+def test_segments_absent_is_none():
+    assert parse_manifest(dump(valid_document())).segments is None
+
+
+def test_rejects_invalid_segments():
+    document = valid_document()
+    document["segments"] = ["nope"]
+    with pytest.raises(ManifestError):
+        parse_manifest(dump(document))

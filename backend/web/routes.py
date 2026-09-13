@@ -9,7 +9,9 @@ bp = Blueprint("main", __name__)
 def index():
     dist = os.path.join(current_app.root_path, "static", "dist")
     if os.path.isfile(os.path.join(dist, "index.html")):
-        return send_from_directory(dist, "index.html")
+        response = send_from_directory(dist, "index.html")
+        response.headers["Cache-Control"] = "no-store"
+        return response
     return render_template("index.html")
 
 

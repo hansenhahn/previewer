@@ -4,44 +4,55 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>previewer</title>
-    <link rel="stylesheet" href="/src/style.css">
   </head>
   <body>
     <div id="app">
-      <header>
-        <h1>previewer</h1>
-        <div id="error" class="error" hidden></div>
+      <header id="app-bar" class="pv-bar">
+        <span class="pv-brand">previewer</span>
+        <div id="project-slot" class="pv-project"></div>
+        <div id="view-slot" class="pv-seg-group"></div>
+        <span class="pv-sep"></span>
+        <div id="text-actions-slot" class="pv-actions"></div>
+        <span class="pv-spacer"></span>
+        <div id="nav-slot" class="pv-actions"></div>
+        <div id="theme-slot" class="pv-actions"></div>
+        <input id="upload" type="file" accept=".zip" hidden>
       </header>
-      <main>
-        <aside id="sidebar">
-          <section>
-            <h2>Projetos</h2>
-            <ul id="project-list"></ul>
-            <label class="upload">
-              Importar .zip
-              <input id="upload" type="file" accept=".zip">
-            </label>
-          </section>
-          <section>
-            <h2>Arquivos</h2>
-            <ul id="file-list"></ul>
-          </section>
-        </aside>
-        <section id="workspace">
-          <div id="toolbar">
-            <select id="screen-select"></select>
-            <button id="save">Salvar</button>
-            <label>Zoom <input id="zoom" type="range" min="1" max="6" step="1" value="2"></label>
-            <span id="status"></span>
-          </div>
-          <div class="panes">
-            <div id="editor"></div>
-            <div class="preview-wrap">
-              <canvas id="preview" width="256" height="192"></canvas>
+      <div id="error-slot" class="pv-errorbar" hidden></div>
+      <div id="workspace">
+        <div class="workspace-docs">
+          <div id="tabs" class="pv-tabs"></div>
+          <div class="docs-body">
+            <aside id="docs-sidebar">
+              <h2>Arquivos</h2>
+              <div id="file-list" class="pv-tree-host"></div>
+            </aside>
+            <div class="panes">
+              <section class="pane">
+                <div id="editor" class="editor-host"></div>
+                <div id="cat-host" class="cat-host" hidden></div>
+              </section>
+              <section class="pane" id="original-pane">
+                <div id="original" class="editor-host"></div>
+              </section>
+              <section class="pane preview-wrap">
+                <div class="pane-head">
+                  <span class="pv-label">Prévia</span>
+                  <span class="pv-spacer"></span>
+                  <div id="screen-slot"></div>
+                  <span class="pv-label">Zoom</span>
+                  <input id="zoom" type="range" min="1" max="4" step="1" value="1">
+                </div>
+                <div class="preview-body">
+                  <div id="preview-stage" class="preview-stage">
+                    <canvas id="preview" width="256" height="192"></canvas>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
