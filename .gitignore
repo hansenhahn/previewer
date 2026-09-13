@@ -1,0 +1,10 @@
+*.pyc
+__pycache__/
+.pytest_cache/
+.venv/
+.env
+editor/
+editor.rar
+node_modules/
+frontend/dist/
+app/static/dist/

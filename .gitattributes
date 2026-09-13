@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+*.pyc binary
+*.NFTR binary
+*.nftr binary
+*.png binary
+*.rar binary
+*.dll binary
+*.exe binary
+*.lib binary
