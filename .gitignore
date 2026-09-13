@@ -8,3 +8,4 @@ editor.rar
 node_modules/
 frontend/dist/
 backend/web/static/dist/
+previewer_files/
