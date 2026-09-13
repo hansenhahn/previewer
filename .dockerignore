@@ -6,12 +6,12 @@
 __pycache__
 *.pyc
 .pytest_cache
-editor/
-editor.rar
+legacy/
 *.rar
 openspec/
 tests/
+docs/
 MIGRATION.md
 node_modules
 frontend/node_modules
-app/static/dist
+backend/web/static/dist

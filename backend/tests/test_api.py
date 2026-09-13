@@ -3,8 +3,8 @@ import io
 import pytest
 from sqlalchemy.pool import StaticPool
 
-from app import create_app
-from app.config import Settings
+from web import create_app
+from web.config import Settings
 from infra.db import Database
 from infra.storage import FilesystemStorage
 from tests.fixtures.project import build_bundle

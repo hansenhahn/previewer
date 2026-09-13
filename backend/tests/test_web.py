@@ -1,5 +1,5 @@
-from app import create_app
-from app.config import Settings
+from web import create_app
+from web.config import Settings
 
 
 class FakeDatabase:

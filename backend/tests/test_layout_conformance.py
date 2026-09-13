@@ -7,7 +7,7 @@ from domain.fonts.base import Glyph
 from domain.layout import ScreenConfig, layout
 
 CASES = json.loads(
-    (Path(__file__).parent.parent / "frontend" / "src" / "layout_cases.json").read_text(
+    (Path(__file__).parents[2] / "frontend" / "src" / "layout_cases.json").read_text(
         encoding="utf-8"
     )
 )

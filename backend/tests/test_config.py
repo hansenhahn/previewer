@@ -1,6 +1,6 @@
 import pytest
 
-from app.config import ConfigError, load_settings
+from web.config import ConfigError, load_settings
 
 
 def test_complete_config():

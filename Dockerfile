@@ -10,7 +10,7 @@ RUN npm run build
 FROM python:3.13-slim AS builder
 
 WORKDIR /app
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
 
@@ -26,13 +26,15 @@ RUN useradd --create-home --uid 10001 app \
     && chown app:app /data
 
 COPY --from=builder /wheels /wheels
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \
     && rm -rf /wheels
 
 COPY . .
-COPY --from=frontend /app/static/dist ./app/static/dist
-RUN chmod +x entrypoint.sh && chown -R app:app /app
+COPY --from=frontend /backend/web/static/dist ./backend/web/static/dist
+RUN chmod +x backend/entrypoint.sh && chown -R app:app /app
+
+WORKDIR /app/backend
 
 USER app
 EXPOSE 8000
