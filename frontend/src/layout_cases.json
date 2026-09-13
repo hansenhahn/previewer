@@ -1,0 +1,108 @@
+{
+  "atlas": {
+    "line_height": 8,
+    "default_advance": 4,
+    "image": { "width": 32, "height": 8, "url": "" },
+    "glyphs": {
+      "32": { "index": 0, "x": 0, "y": 0, "width": 4, "height": 8, "advance": 3, "leading": 3 },
+      "65": { "index": 1, "x": 4, "y": 0, "width": 8, "height": 8, "advance": 7, "leading": 0 },
+      "66": { "index": 2, "x": 12, "y": 0, "width": 8, "height": 8, "advance": 7, "leading": 0 }
+    }
+  },
+  "screen": {
+    "name": "default",
+    "font": "f",
+    "background": "bg",
+    "x": 8,
+    "y": 16,
+    "new_line": 12
+  },
+  "cases": [
+    {
+      "name": "basico",
+      "matches": [],
+      "tags": [],
+      "cursor_line": 0,
+      "text": "AB",
+      "expected": {
+        "glyphs": [
+          { "codepoint": 65, "x": 8, "y": 16 },
+          { "codepoint": 66, "x": 16, "y": 16 }
+        ],
+        "overflow_horizontal": false,
+        "overflow_vertical": false
+      }
+    },
+    {
+      "name": "tags",
+      "matches": [],
+      "tags": ["<t>"],
+      "cursor_line": 0,
+      "text": "A<t>B",
+      "expected": {
+        "glyphs": [
+          { "codepoint": 65, "x": 8, "y": 16 },
+          { "codepoint": 66, "x": 16, "y": 16 }
+        ],
+        "overflow_horizontal": false,
+        "overflow_vertical": false
+      }
+    },
+    {
+      "name": "pivot",
+      "matches": ["#M"],
+      "tags": [],
+      "cursor_line": 2,
+      "text": "head\n#M\nAB",
+      "expected": {
+        "glyphs": [
+          { "codepoint": 65, "x": 8, "y": 16 },
+          { "codepoint": 66, "x": 16, "y": 16 }
+        ],
+        "overflow_horizontal": false,
+        "overflow_vertical": false
+      }
+    },
+    {
+      "name": "nao_mapeado",
+      "matches": [],
+      "tags": [],
+      "cursor_line": 0,
+      "text": "A?B",
+      "expected": {
+        "glyphs": [
+          { "codepoint": 65, "x": 8, "y": 16 },
+          { "codepoint": 63, "x": 16, "y": 16 },
+          { "codepoint": 66, "x": 21, "y": 16 }
+        ],
+        "overflow_horizontal": false,
+        "overflow_vertical": false
+      }
+    },
+    {
+      "name": "transbordo_horizontal",
+      "matches": [],
+      "tags": [],
+      "cursor_line": 0,
+      "text": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expected": {
+        "glyph_count": 32,
+        "overflow_horizontal": true,
+        "overflow_vertical": false
+      }
+    },
+    {
+      "name": "transbordo_vertical",
+      "matches": [],
+      "tags": [],
+      "cursor_line": 0,
+      "new_line": 100,
+      "text": "A\nB\nC",
+      "expected": {
+        "glyph_count": 2,
+        "overflow_horizontal": false,
+        "overflow_vertical": true
+      }
+    }
+  ]
+}

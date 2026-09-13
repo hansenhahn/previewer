@@ -1,0 +1,70 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  # previewer / NDS Preview
+
+  Editor e visualizador de textos para Nintendo DS (NDS). Hoje é um app
+  desktop legado em Python 2 + GTK (misto GTK2/GTK3), empacotado com
+  py2exe/cx_Freeze, que renderiza a tela 256x192 do DS com fontes de bitmap
+  NFTR via cairo.
+
+  ## Objetivo da migração
+  Reescrever como web app dockerizável que rode localmente primeiro (para
+  validar viabilidade), depois hospedado para múltiplos usuários, e que possa
+  no futuro virar um produto genérico (não só textos NDS). Ver MIGRATION.md
+  na raiz, que é o plano mestre.
+
+  ## Stack alvo
+  - Python 3.13/3.14 estável (no-GIL é irrelevante: workload é I/O-bound)
+  - Flask + Jinja (FastAPI só se a API crescer)
+  - Postgres via SQLAlchemy (SQLite aceitável para validar)
+  - Frontend: TypeScript + Canvas 2D + CodeMirror 6 (sem React/Next por ora)
+  - Renderização no cliente; backend serve atlas PNG + JSON de métricas/CMAP
+  - Docker desde o dia 1: imagem multi-stage, container stateless, config por env
+
+  ## Arquitetura
+  Camadas com dependência unidirecional:
+    web -> domain, web -> infra, infra -> domain
+  - domain/ : parsing NFTR, layout/quebra de linha, encoding. PURO: não importa
+    Flask nem storage.
+  - infra/  : StorageBackend (filesystem agora, S3 depois) e banco.
+  - web/    : rotas, auth, upload.
+  Regra central: container efêmero, dado em volume/S3, nada de estado no
+  container. StorageBackend é o seam que não pode ser adiado.
+
+  ## Extensibilidade (Open/Closed)
+  Dois eixos de variação independentes, cada um atrás de um contrato abstrato:
+  1. Formato de fonte: NFTR (bitmap) hoje; TTF/OTF (contorno rasterizado) depois.
+  2. Formato de texto/projeto: NDS hoje; outro jogo/genérico depois.
+  Contratos: FontFormat (sniff/load) -> Font + rasterize(codepoint, size); e
+  ProjectFormat (read_text/write_text/encoding/pivot_patterns). Registro via
+  register(fmt) + detecção por magic bytes. O renderer consome Font genérico e
+  nunca conhece o formato; o atlas é sempre bitmap, então o front é agnóstico.
+  Regra de ouro: no núcleo não pode existir 'if format == ...'. Adicionar
+  formato = novo módulo + registro, sem editar código existente.
+  YAGNI: sem plugin discovery de terceiros nem abstrair formatos desconhecidos
+  antes do segundo caso concreto validar o contrato.
+
+  ## Convenções
+  - Sem comentários no código, salvo quando necessário para explicar o "porquê".
+  - Domínio puro e testável; nftr/layout/encoding com testes unitários e
+    fixtures (fontes NFTR reais, backgrounds, projeto de exemplo).
+  - Semântica no banco, não no layout de pastas.
+
+  ## Não-objetivos (por enquanto)
+  - Microservices, k8s, separar front/back em repos distintos.
+  - Abstrair formatos que ainda não conhecemos. O contrato FontFormat/ProjectFormat
+    é definido pelo primeiro caso concreto (NFTR); TTF valida o contrato depois.
+  - Filas de background (Redis/Celery) antes de gargalo real.
+
+# Per-artifact rules (optional)
+rules:
+  proposal:
+    - Escreva os artefatos em português (pt-BR).
+    - Sempre inclua uma seção "Não-objetivos".
+    - Referencie a fase correspondente em MIGRATION.md quando aplicável.
+  tasks:
+    - Quebre as tarefas em passos verificáveis, com o comando de teste quando houver.
+    - Marque como concluída apenas após verificação real (teste/execução).
