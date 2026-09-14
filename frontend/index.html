@@ -6,7 +6,7 @@
     <title>previewer</title>
   </head>
   <body>
-    <div id="app">
+    <div id="app" hidden>
       <header id="app-bar" class="pv-bar">
         <span class="pv-brand">previewer</span>
         <div id="project-slot" class="pv-project"></div>
@@ -16,6 +16,7 @@
         <span class="pv-spacer"></span>
         <div id="nav-slot" class="pv-actions"></div>
         <div id="theme-slot" class="pv-actions"></div>
+        <div id="account-slot" class="pv-actions"></div>
         <input id="upload" type="file" accept=".zip" hidden>
       </header>
       <div id="error-slot" class="pv-errorbar" hidden></div>
@@ -27,6 +28,13 @@
               <h2>Arquivos</h2>
               <div id="file-list" class="pv-tree-host"></div>
             </aside>
+            <div
+              id="sidebar-resizer"
+              class="pv-resizer"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Redimensionar painel de arquivos"
+            ></div>
             <div class="panes">
               <section class="pane">
                 <div id="editor" class="editor-host"></div>
@@ -35,13 +43,18 @@
               <section class="pane" id="original-pane">
                 <div id="original" class="editor-host"></div>
               </section>
-              <section class="pane preview-wrap">
+              <div
+                id="preview-resizer"
+                class="pv-resizer pv-resizer--preview"
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Redimensionar prévia"
+              ></div>
+              <section class="pane preview-wrap" id="preview-pane">
                 <div class="pane-head">
                   <span class="pv-label">Prévia</span>
                   <span class="pv-spacer"></span>
                   <div id="screen-slot"></div>
-                  <span class="pv-label">Zoom</span>
-                  <input id="zoom" type="range" min="1" max="4" step="1" value="1">
                 </div>
                 <div class="preview-body">
                   <div id="preview-stage" class="preview-stage">
@@ -54,6 +67,7 @@
         </div>
       </div>
     </div>
+    <div id="login-view" class="login-view" hidden></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

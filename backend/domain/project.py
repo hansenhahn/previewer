@@ -35,6 +35,7 @@ class Texts:
 class Segments:
     start: tuple[str, ...] = ()
     end: tuple[str, ...] = ()
+    separators: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,7 +84,11 @@ class ProjectManifest:
             "tags": list(self.tags),
             "matches": list(self.matches),
             "segments": (
-                {"start": list(self.segments.start), "end": list(self.segments.end)}
+                {
+                    "start": list(self.segments.start),
+                    "end": list(self.segments.end),
+                    "separators": list(self.segments.separators),
+                }
                 if self.segments is not None
                 else None
             ),
@@ -132,6 +137,7 @@ def _segments(mapping: dict) -> Segments | None:
     return Segments(
         start=_string_list(value, "start"),
         end=_string_list(value, "end"),
+        separators=_string_list(value, "separators"),
     )
 
 

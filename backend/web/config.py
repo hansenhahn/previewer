@@ -6,7 +6,14 @@ class ConfigError(RuntimeError):
     pass
 
 
-REQUIRED = ("STORAGE_ROOT", "DATABASE_URL", "SECRET_KEY")
+REQUIRED = (
+    "STORAGE_ROOT",
+    "DATABASE_URL",
+    "SECRET_KEY",
+    "GITHUB_CLIENT_ID",
+    "GITHUB_CLIENT_SECRET",
+    "GITHUB_ALLOWED_USERS",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,6 +22,9 @@ class Settings:
     database_url: str
     secret_key: str
     flask_env: str = "production"
+    github_client_id: str = ""
+    github_client_secret: str = ""
+    github_allowed_users: str = ""
 
 
 def load_settings(environ=None) -> Settings:
@@ -29,4 +39,7 @@ def load_settings(environ=None) -> Settings:
         database_url=environ["DATABASE_URL"],
         secret_key=environ["SECRET_KEY"],
         flask_env=environ.get("FLASK_ENV", "production"),
+        github_client_id=environ["GITHUB_CLIENT_ID"],
+        github_client_secret=environ["GITHUB_CLIENT_SECRET"],
+        github_allowed_users=environ["GITHUB_ALLOWED_USERS"],
     )

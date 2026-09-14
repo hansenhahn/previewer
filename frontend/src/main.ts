@@ -1,5 +1,6 @@
 import {
   backgroundUrl,
+  getAuthMe,
   getProject,
   listFiles,
   listProjects,
@@ -7,6 +8,8 @@ import {
   saveFile,
   uploadProject,
 } from "./api";
+import { loadAuthConfig, renderLogin } from "./auth";
+import { renderAccount } from "./shell/account";
 import {
   addDocument,
   closeDocument,
@@ -18,8 +21,9 @@ import {
   type OpenDocument,
 } from "./documents";
 import { createEditor, createReadOnlyEditor } from "./editor";
-import { Preview, SCREEN_HEIGHT, SCREEN_WIDTH } from "./preview";
+import { Preview } from "./preview";
 import { createCat } from "./shell/cat";
+import { createGithubImport } from "./shell/github-import";
 import { renderTabs } from "./shell/tabs";
 import { renderFileTree } from "./shell/tree";
 import { kit, type Theme } from "./ui";
@@ -51,6 +55,117 @@ function iconButton(name: string, label: string, onClick: () => void): HTMLButto
 }
 
 const fileList = element<HTMLElement>("file-list");
+const appRoot = element<HTMLElement>("app");
+const loginView = element<HTMLElement>("login-view");
+const accountSlot = element<HTMLElement>("account-slot");
+const sidebar = element<HTMLElement>("docs-sidebar");
+const sidebarResizer = element<HTMLElement>("sidebar-resizer");
+const previewPane = element<HTMLElement>("preview-pane");
+const previewResizer = element<HTMLElement>("preview-resizer");
+
+const SIDEBAR_KEY = "pv-sidebar-width";
+const SIDEBAR_MIN = 140;
+
+function sidebarMax(): number {
+  return Math.max(320, window.innerWidth * 0.7);
+}
+
+function setSidebarWidth(px: number): void {
+  const clamped = Math.min(Math.max(px, SIDEBAR_MIN), sidebarMax());
+  sidebar.style.setProperty("--pv-sidebar-width", `${clamped}px`);
+}
+
+const storedSidebar = (() => {
+  try {
+    return Number(window.localStorage.getItem(SIDEBAR_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+})();
+if (storedSidebar > 0) {
+  setSidebarWidth(storedSidebar);
+}
+
+sidebarResizer.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  sidebarResizer.setPointerCapture(event.pointerId);
+  sidebarResizer.classList.add("active");
+  const startX = event.clientX;
+  const startWidth = sidebar.getBoundingClientRect().width;
+  const onMove = (move: PointerEvent): void => {
+    setSidebarWidth(startWidth + (move.clientX - startX));
+  };
+  const onUp = (): void => {
+    sidebarResizer.classList.remove("active");
+    sidebarResizer.removeEventListener("pointermove", onMove);
+    sidebarResizer.removeEventListener("pointerup", onUp);
+    try {
+      window.localStorage.setItem(
+        SIDEBAR_KEY,
+        String(Math.round(sidebar.getBoundingClientRect().width)),
+      );
+    } catch {
+      // armazenamento indisponível: ignora
+    }
+  };
+  sidebarResizer.addEventListener("pointermove", onMove);
+  sidebarResizer.addEventListener("pointerup", onUp);
+});
+
+sidebarResizer.addEventListener("dblclick", () => {
+  sidebar.style.removeProperty("--pv-sidebar-width");
+  try {
+    window.localStorage.removeItem(SIDEBAR_KEY);
+  } catch {
+    // armazenamento indisponível: ignora
+  }
+});
+
+const PREVIEW_KEY = "pv-preview-width";
+
+function previewMax(): number {
+  return Math.max(320, window.innerWidth * 0.8);
+}
+
+function setPreviewWidth(px: number): void {
+  const clamped = Math.min(Math.max(px, previewMin()), previewMax());
+  previewPane.style.setProperty("--pv-preview-width", `${clamped}px`);
+}
+
+previewResizer.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  previewResizer.setPointerCapture(event.pointerId);
+  previewResizer.classList.add("active");
+  const startX = event.clientX;
+  const startWidth = previewPane.getBoundingClientRect().width;
+  const onMove = (move: PointerEvent): void => {
+    setPreviewWidth(startWidth - (move.clientX - startX));
+  };
+  const onUp = (): void => {
+    previewResizer.classList.remove("active");
+    previewResizer.removeEventListener("pointermove", onMove);
+    previewResizer.removeEventListener("pointerup", onUp);
+    try {
+      window.localStorage.setItem(
+        PREVIEW_KEY,
+        String(Math.round(previewPane.getBoundingClientRect().width)),
+      );
+    } catch {
+      // armazenamento indisponível: ignora
+    }
+  };
+  previewResizer.addEventListener("pointermove", onMove);
+  previewResizer.addEventListener("pointerup", onUp);
+});
+
+previewResizer.addEventListener("dblclick", () => {
+  previewPane.style.removeProperty("--pv-preview-width");
+  try {
+    window.localStorage.removeItem(PREVIEW_KEY);
+  } catch {
+    // armazenamento indisponível: ignora
+  }
+});
 const projectSlot = element<HTMLDivElement>("project-slot");
 const viewSlot = element<HTMLDivElement>("view-slot");
 const textActionsSlot = element<HTMLDivElement>("text-actions-slot");
@@ -62,10 +177,54 @@ const tabsContainer = element<HTMLDivElement>("tabs");
 const originalPane = element<HTMLElement>("original-pane");
 const editorHost = element<HTMLElement>("editor");
 const catHost = element<HTMLElement>("cat-host");
-const zoom = element<HTMLInputElement>("zoom");
-const previewStage = element<HTMLDivElement>("preview-stage");
+const previewStage = element<HTMLElement>("preview-stage");
 const upload = element<HTMLInputElement>("upload");
-const preview = new Preview(element<HTMLCanvasElement>("preview"));
+const previewCanvas = element<HTMLCanvasElement>("preview");
+const preview = new Preview(previewCanvas);
+
+function previewMin(): number {
+  const body = previewStage.parentElement;
+  if (!body) {
+    return previewCanvas.width;
+  }
+  const style = window.getComputedStyle(body);
+  const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  return previewCanvas.width + padding;
+}
+
+function fitPreview(): void {
+  const width = previewStage.clientWidth;
+  const height = previewStage.clientHeight;
+  if (width <= 0 || height <= 0) {
+    return;
+  }
+  const scale = Math.max(
+    1,
+    Math.min(
+      Math.floor(width / previewCanvas.width),
+      Math.floor(height / previewCanvas.height),
+    ),
+  );
+  preview.setZoom(scale);
+  previewPane.style.setProperty(
+    "--pv-preview-image-width",
+    `${previewCanvas.width}px`,
+  );
+}
+
+new ResizeObserver(() => fitPreview()).observe(previewStage);
+
+const storedPreview = (() => {
+  try {
+    return Number(window.localStorage.getItem(PREVIEW_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+})();
+if (storedPreview > 0) {
+  setPreviewWidth(storedPreview);
+}
+
 const editor = createEditor(editorHost, () => onEditorChange());
 const originalEditor = createReadOnlyEditor(element<HTMLDivElement>("original"));
 const cat = createCat({ onTranslatedChange: onCatChange, onSelect: onCatSelect });
@@ -160,6 +319,16 @@ screenModal.addEventListener("mousedown", (event) => {
   }
 });
 document.body.append(screenModal);
+
+const githubImport = createGithubImport({
+  onImported: (projectId) => {
+    void guard(async () => {
+      await refreshProjects();
+      location.hash = `#/projects/${projectId}`;
+    });
+  },
+});
+document.body.append(githubImport.element);
 
 let pendingScreen: string | undefined;
 
@@ -272,6 +441,7 @@ function loadCat(doc: OpenDocument | undefined, fallbackContent = ""): void {
     doc?.original ?? null,
     segments?.start ?? [],
     segments?.end ?? [],
+    segments?.separators ?? [],
   );
 }
 
@@ -359,6 +529,14 @@ function renderProjectSelector(): void {
     upload.click();
   });
   projectMenu.append(importItem);
+  const githubItem = document.createElement("button");
+  githubItem.type = "button";
+  githubItem.textContent = "Importar do GitHub…";
+  githubItem.addEventListener("click", () => {
+    projectMenu.hidden = true;
+    githubImport.open();
+  });
+  projectMenu.append(githubItem);
   if (state.project) {
     const meta = document.createElement("div");
     meta.className = "meta";
@@ -617,14 +795,6 @@ upload.addEventListener("change", () => {
   upload.value = "";
 });
 
-function applyZoom(): void {
-  const value = Number(zoom.value);
-  previewStage.style.width = `${SCREEN_WIDTH * value}px`;
-  previewStage.style.height = `${SCREEN_HEIGHT * value}px`;
-}
-
-zoom.addEventListener("input", applyZoom);
-
 window.addEventListener("hashchange", () => {
   const match = /^#\/projects\/(.+)$/.exec(location.hash);
   if (match) {
@@ -639,12 +809,35 @@ renderProjectSelector();
 renderScreenSelector();
 setView("editor");
 originalPane.hidden = !state.showOriginal;
-applyZoom();
+fitPreview();
 
-void guard(async () => {
-  await refreshProjects();
-  const match = /^#\/projects\/(.+)$/.exec(location.hash);
-  if (match) {
-    await openProject(match[1]);
+const AUTH_MESSAGES: Record<string, string> = {
+  denied: "Acesso negado: sua conta não está autorizada.",
+  invalid_state: "A sessão de login expirou. Tente novamente.",
+  error: "Não foi possível concluir o login. Tente novamente.",
+};
+
+void (async () => {
+  try {
+    const [config, me] = await Promise.all([loadAuthConfig(), getAuthMe()]);
+    state.authConfig = config;
+    if (!me.authenticated || !me.user) {
+      const authError = new URLSearchParams(window.location.search).get("auth");
+      appRoot.hidden = true;
+      renderLogin(loginView, config, authError ? AUTH_MESSAGES[authError] : undefined);
+      return;
+    }
+    state.auth = me.user;
+    appRoot.hidden = false;
+    renderAccount(accountSlot, me.user, config);
+    await guard(async () => {
+      await refreshProjects();
+      const match = /^#\/projects\/(.+)$/.exec(location.hash);
+      if (match) {
+        await openProject(match[1]);
+      }
+    });
+  } catch (error) {
+    showError(error instanceof Error ? error.message : String(error));
   }
-});
+})();

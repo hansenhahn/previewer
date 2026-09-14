@@ -110,6 +110,50 @@ def segment(
     return tuple(parts)
 
 
+def segment_by_separators(
+    text: str,
+    separator_patterns: tuple[str, ...],
+) -> tuple[Part, ...]:
+    lines = text.split("\n")
+    if not separator_patterns:
+        return (Part("separator", tuple(lines)),)
+
+    parts: list[Part] = []
+    buffer: list[str] = []
+    marks: list[str] = []
+    start = 0
+    index = 0
+
+    def flush_segment(end: int) -> None:
+        nonlocal buffer, index
+        if buffer:
+            parts.append(
+                Part("segment", segment=Segment(index, start, end, (), tuple(buffer), ()))
+            )
+            index += 1
+            buffer = []
+
+    def flush_marks() -> None:
+        nonlocal marks
+        if marks:
+            parts.append(Part("separator", tuple(marks)))
+            marks = []
+
+    for position, line in enumerate(lines):
+        if _matches(line, separator_patterns):
+            flush_segment(position - 1)
+            marks.append(line)
+        else:
+            flush_marks()
+            if not buffer:
+                start = position
+            buffer.append(line)
+
+    flush_segment(len(lines) - 1)
+    flush_marks()
+    return tuple(parts)
+
+
 def reconstruct(parts: tuple[Part, ...]) -> str:
     lines: list[str] = []
     for part in parts:

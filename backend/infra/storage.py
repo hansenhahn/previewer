@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
@@ -59,6 +60,12 @@ class FilesystemStorage:
     def create_project(self, owner_id: str, project_id: str) -> None:
         self._project_dir(owner_id, project_id).mkdir(parents=True, exist_ok=True)
 
+    def delete_project(self, owner_id: str, project_id: str) -> None:
+        shutil.rmtree(self._project_dir(owner_id, project_id), ignore_errors=True)
+
+    def local_path(self, owner_id: str, project_id: str) -> Path:
+        return self._project_dir(owner_id, project_id)
+
     def list_projects(self, owner_id: str) -> list[str]:
         owner_dir = self._owner_dir(owner_id)
         if not owner_dir.is_dir():
@@ -72,7 +79,9 @@ class FilesystemStorage:
         files = [
             path.relative_to(base).as_posix()
             for path in base.rglob("*")
-            if path.is_file() and not path.is_symlink()
+            if path.is_file()
+            and not path.is_symlink()
+            and ".git" not in path.relative_to(base).parts
         ]
         return sorted(files)
 

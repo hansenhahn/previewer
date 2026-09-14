@@ -117,10 +117,15 @@ def test_rejects_invalid_screen_coordinate():
 
 def test_parses_segments():
     document = valid_document()
-    document["segments"] = {"start": ["^<d>"], "end": ["^</d>"]}
+    document["segments"] = {
+        "start": ["^<d>"],
+        "end": ["^</d>"],
+        "separators": ["^!.*!$"],
+    }
     manifest = parse_manifest(dump(document))
     assert manifest.segments.start == ("^<d>",)
     assert manifest.segments.end == ("^</d>",)
+    assert manifest.segments.separators == ("^!.*!$",)
 
 
 def test_segments_absent_is_none():

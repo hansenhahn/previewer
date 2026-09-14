@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import rawCases from "./segmentation_cases.json";
-import { align, reconstruct, segment, segmentBody, segmentsOf } from "./segmentation";
+import { align, reconstruct, segment, segmentBody, segmentBySeparators, segmentsOf } from "./segmentation";
 
 interface Case {
   name: string;
@@ -44,6 +44,14 @@ describe("segmentação (conformidade)", () => {
     expect(pairs).toHaveLength(2);
     expect(pairs[1].original).toBeDefined();
     expect(pairs[1].translated).toBeUndefined();
+  });
+
+  it("segmenta por separadores em blocos (nome e diálogo)", () => {
+    const text = "[h]\nナレーション\n!***!\n<V0000>oi\n!***!\n[h2]\nNome\n!***!\n<V0010>tchau\n!***!";
+    const parts = segmentBySeparators(text, ["^\\[.+\\]$", "^!.*!$"]);
+    const bodies = segmentsOf(parts).map((seg) => seg.bodyLines.join("\n"));
+    expect(bodies).toEqual(["ナレーション", "<V0000>oi", "Nome", "<V0010>tchau"]);
+    expect(reconstruct(parts)).toBe(text);
   });
 });
 

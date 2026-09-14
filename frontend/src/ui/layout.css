@@ -396,12 +396,65 @@ body {
 }
 
 #docs-sidebar {
-  flex: 0 0 240px;
-  width: 240px;
+  flex: 0 0 var(--pv-sidebar-width, 240px);
+  width: var(--pv-sidebar-width, 240px);
+  min-width: 120px;
+  max-width: 70vw;
   padding: var(--pv-space-s);
   background: var(--pv-color-surface);
   border-right: 1px solid var(--pv-color-border);
   overflow: auto;
+}
+
+.pv-resizer {
+  position: relative;
+  flex: 0 0 6px;
+  margin-left: -3px;
+  margin-right: -3px;
+  z-index: 2;
+  cursor: col-resize;
+  background: transparent;
+  touch-action: none;
+}
+
+.pv-resizer::after {
+  content: "⠿";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--pv-color-border);
+  border-radius: 999px;
+  background: var(--pv-color-surface);
+  color: var(--pv-color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1;
+  box-shadow: var(--pv-shadow-s);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.pv-resizer:hover::after,
+.pv-resizer.active::after {
+  color: var(--pv-color-brand);
+  border-color: var(--pv-color-brand);
+  opacity: 1;
+}
+
+.pv-resizer:hover,
+.pv-resizer.active {
+  background: var(--pv-color-brand);
+  opacity: 0.35;
+}
+
+.pv-resizer--preview {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 #docs-sidebar h2 {
@@ -414,35 +467,39 @@ body {
 
 /* Coluna de prévia (dentro da aba) */
 .pane.preview-wrap {
-  flex: 0 0 auto;
-  min-width: 0;
+  flex: 0 0 var(--pv-preview-width, 380px);
+  width: var(--pv-preview-width, 380px);
+  min-width: calc(var(--pv-preview-image-width, 256px) + 2 * var(--pv-space-m));
+  max-width: 80vw;
   display: flex;
   flex-direction: column;
   min-height: 0;
   background: var(--pv-color-surface-muted);
+  border-left: 1px solid var(--pv-color-border);
 }
 
 .preview-body {
   display: flex;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   padding: var(--pv-space-m);
+  background: var(--pv-color-surface-muted);
 }
 
 .preview-stage {
   display: flex;
-  align-items: center;
+  flex: 1;
+  align-items: flex-start;
   justify-content: center;
-  margin: auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #preview {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
   image-rendering: pixelated;
-  background: #000;
+  background: var(--pv-color-surface-muted);
   box-shadow: var(--pv-shadow-s);
 }
 
@@ -746,7 +803,7 @@ body {
 }
 
 .pv-tree-children {
-  margin-left: 16px;
+  margin-left: 10px;
 }
 
 /* Zoom (na prévia) */
@@ -758,4 +815,211 @@ body {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* Tela de login (desacoplada do provedor) */
+.login-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--pv-space-xl);
+  background: var(--pv-color-bg);
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv-space-m);
+  align-items: center;
+  width: min(360px, 100%);
+  padding: var(--pv-space-xl);
+  text-align: center;
+  background: var(--pv-color-surface);
+  border: 1px solid var(--pv-color-border);
+  border-radius: var(--pv-radius-m);
+  box-shadow: var(--pv-shadow-s);
+}
+
+.login-brand {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+}
+
+.login-message {
+  margin: 0;
+  color: var(--pv-color-text-muted);
+}
+
+.login-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Conta no cabeçalho */
+.pv-account {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--pv-color-text);
+  cursor: pointer;
+}
+
+.pv-account:hover {
+  background: var(--pv-color-surface-muted);
+  border-color: var(--pv-color-border);
+}
+
+.pv-account-name {
+  font-size: 0.8rem;
+}
+
+.pv-account-head {
+  display: flex;
+  align-items: center;
+  gap: var(--pv-space-s);
+  min-width: 200px;
+  padding: var(--pv-space-s) var(--pv-space-m);
+}
+
+.pv-account-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pv-account-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.pv-account-info strong {
+  font-size: 0.9rem;
+}
+
+.pv-account-email,
+.pv-account-provider {
+  color: var(--pv-color-text-muted);
+  font-size: 0.75rem;
+}
+
+/* Importar do GitHub */
+.pv-github-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--pv-space-xs);
+}
+
+.pv-github-status {
+  margin: 0;
+  padding: 10px 16px 0;
+  color: var(--pv-color-text-muted);
+  font-size: 0.85rem;
+}
+
+.pv-github-list {
+  overflow: auto;
+  max-height: 60vh;
+  padding: 8px 8px 12px;
+}
+
+.pv-github-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.pv-github-row + .pv-github-row {
+  border-top: 1px solid var(--pv-color-border);
+}
+
+.pv-github-row:hover:not(.pv-github-row--disabled) {
+  background: var(--pv-color-surface-muted);
+  border-radius: var(--pv-radius-s);
+}
+
+.pv-github-name {
+  font-weight: 600;
+}
+
+.pv-github-meta {
+  margin-top: 2px;
+  color: var(--pv-color-text-muted);
+  font-size: 0.78rem;
+}
+
+.pv-github-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pv-github-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.pv-github-chip--ok {
+  color: var(--pv-color-success);
+  background: var(--pv-color-success-soft);
+}
+
+.pv-github-chip--no {
+  color: var(--pv-color-text-muted);
+  background: var(--pv-color-surface-muted);
+}
+
+.pv-github-import {
+  padding: 5px 14px;
+  background: var(--pv-color-brand);
+  border: 0;
+  border-radius: var(--pv-radius-s);
+  color: var(--pv-color-brand-contrast);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pv-github-row--disabled {
+  opacity: 0.62;
+}
+
+/* Barras de rolagem (tema, arredondadas e discretas) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pv-color-scroll-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--pv-color-scroll-thumb);
+  background-clip: content-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--pv-color-scroll-thumb-hover);
 }

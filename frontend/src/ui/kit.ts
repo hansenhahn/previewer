@@ -33,10 +33,30 @@ export interface CalloutHandle {
   hide(): void;
 }
 
+export interface MenuItem {
+  label: string;
+  onSelect: () => void;
+  icon?: string;
+  danger?: boolean;
+}
+
+export interface MenuOptions {
+  trigger: HTMLElement;
+  header?: HTMLElement;
+  items: MenuItem[];
+}
+
+export interface MenuHandle {
+  element: HTMLElement;
+  open(): void;
+  close(): void;
+}
+
 export interface UiKit {
   button(options: ButtonOptions): HTMLElement;
   select(options: SelectOptions): HTMLElement;
   icon(name: string, label?: string): HTMLElement;
+  menu(options: MenuOptions): MenuHandle;
   callout(message: string, variant?: CalloutVariant): CalloutHandle;
   toast(options: ToastOptions): void;
   applyTheme(theme: Theme): void;

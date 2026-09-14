@@ -116,6 +116,62 @@ export function segment(
   return parts;
 }
 
+export function segmentBySeparators(text: string, separatorPatterns: string[]): Part[] {
+  const lines = text.split("\n");
+  if (separatorPatterns.length === 0) {
+    return [{ kind: "separator", lines: [...lines] }];
+  }
+
+  const parts: Part[] = [];
+  let buffer: string[] = [];
+  let marks: string[] = [];
+  let start = 0;
+  let index = 0;
+
+  const flushSegment = (end: number): void => {
+    if (buffer.length > 0) {
+      parts.push({
+        kind: "segment",
+        lines: [],
+        segment: {
+          index,
+          startLine: start,
+          endLine: end,
+          prefixLines: [],
+          bodyLines: buffer,
+          suffixLines: [],
+        },
+      });
+      index += 1;
+      buffer = [];
+    }
+  };
+
+  const flushMarks = (): void => {
+    if (marks.length > 0) {
+      parts.push({ kind: "separator", lines: marks });
+      marks = [];
+    }
+  };
+
+  lines.forEach((line, position) => {
+    if (matches(line, separatorPatterns)) {
+      flushSegment(position - 1);
+      marks.push(line);
+    } else {
+      flushMarks();
+      if (buffer.length === 0) {
+        start = position;
+      }
+      buffer.push(line);
+    }
+  });
+
+  flushSegment(lines.length - 1);
+  flushMarks();
+  return parts;
+}
+
 export function reconstruct(parts: Part[]): string {
   const lines: string[] = [];
   for (const part of parts) {
