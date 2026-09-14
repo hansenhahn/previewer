@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mock A - barra única</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; font-size: 14px; color: #1f2937; background: #f6f7f9; }
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* Barra única */
+  .bar { display: flex; align-items: center; gap: 12px; padding: 6px 12px; background: #fff; border-bottom: 1px solid #d6dade; }
+  .group { display: flex; align-items: center; gap: 8px; }
+  .divider { width: 1px; height: 22px; background: #e5e7eb; }
+  .spacer { flex: 1; }
+  .project .name { font-weight: 600; }
+  .chip { font-size: 11px; color: #6b7280; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 999px; padding: 1px 8px; }
+  .seg { border: 1px solid #d6dade; background: #f9fafb; padding: 4px 10px; cursor: pointer; }
+  .seg:first-child { border-radius: 6px 0 0 6px; }
+  .seg:last-child { border-radius: 0 6px 6px 0; margin-left: -1px; }
+  .seg.active { background: #eef2ff; border-color: #bfdbfe; color: #1d4ed8; font-weight: 600; }
+  .btn { border: 1px solid #d6dade; background: #fff; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+  .btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; }
+  .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; }
+  select { border: 1px solid #d6dade; border-radius: 6px; padding: 4px 8px; background: #fff; }
+
+  /* Abas */
+  .tabs { display: flex; gap: 2px; padding: 6px 12px 0; background: #eef0f3; border-bottom: 1px solid #d6dade; }
+  .tab { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #d6dade; border-bottom: none; border-radius: 6px 6px 0 0; padding: 6px 10px; color: #6b7280; cursor: pointer; }
+  .tab.active { border-color: #2563eb; color: #1d4ed8; }
+  .tab .x { color: #9aa4ad; }
+
+  /* Corpo */
+  .body { display: flex; flex: 1; min-height: 0; }
+  .tree { width: 240px; background: #fff; border-right: 1px solid #d6dade; padding: 10px; overflow: auto; }
+  .tree h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; margin: 0 0 8px; }
+  .node { display: flex; align-items: center; gap: 6px; padding: 2px 4px; color: #6b7280; }
+  .node.active { color: #2563eb; font-weight: 600; }
+  .indent { margin-left: 16px; }
+  .editor { flex: 1; padding: 12px; overflow: auto; }
+  .card { background: #fff; border: 1px solid #d6dade; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.06); margin-bottom: 10px; }
+  .card.active { border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb; }
+  .card-head { display: flex; justify-content: space-between; padding: 6px 12px; background: #f3f4f6; border-bottom: 1px solid #d6dade; font-size: 12px; color: #6b7280; }
+  .card-body { padding: 12px; }
+  .src { background: #f3f4f6; color: #6b7280; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
+  textarea { width: 100%; min-height: 40px; border: 1px solid #d6dade; border-radius: 6px; padding: 8px; font: inherit; resize: vertical; }
+  .preview { width: 360px; background: #eef0f3; border-left: 1px solid #d6dade; padding: 12px; }
+  .screen { width: 256px; height: 192px; margin: 0 auto; background: #2b2f3a; border: 4px solid #1f2937; border-radius: 8px; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar">
+    <div class="group project"><span class="name">Playton 2</span><span class="chip">CP1252</span></div>
+    <div class="divider"></div>
+    <div class="group">
+      <button class="seg active">Segmentos</button><button class="seg">Editor</button>
+    </div>
+    <div class="group">
+      <button class="btn primary">Salvar</button>
+      <button class="btn">Original</button>
+      <span class="dot" title="não salvo"></span>
+    </div>
+    <div class="spacer"></div>
+    <div class="group"><span class="label">Tela</span><select><option>Textos Normais</option></select></div>
+    <div class="group"><span class="label">Zoom</span><input type="range" min="1" max="6" value="2"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">ev_t10.plz.txt <span class="x">×</span></div>
+    <div class="tab">ev_t11.plz.txt <span class="x">×</span></div>
+  </div>
+
+  <div class="body">
+    <aside class="tree">
+      <h2>Arquivos</h2>
+      <div class="node">▾ 📁 event</div>
+      <div class="node indent">▾ 📁 en</div>
+      <div class="node indent" style="margin-left:32px">📄 ev_t10.plz.txt</div>
+      <div class="node" style="margin-left:32px;color:#2563eb;font-weight:600">📄 ev_t11.plz.txt</div>
+      <div class="node">▸ 📁 nazo</div>
+    </aside>
+    <main class="editor">
+      <div class="card active">
+        <div class="card-head"><span>#1</span><span>traduzido</span></div>
+        <div class="card-body">
+          <div class="src">Professor, we never stay in places as nice as this.</div>
+          <textarea>Professor, nós nunca ficamos em lugares tão bonitos quanto este.</textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span>#2</span><span>vazio</span></div>
+        <div class="card-body">
+          <div class="src">Quite so, Luke. Every fixture is the very height of decadence.</div>
+          <textarea placeholder="Traduza aqui..."></textarea>
+        </div>
+      </div>
+    </main>
+    <aside class="preview">
+      <div class="label" style="margin-bottom:8px">Prévia</div>
+      <div class="screen"></div>
+    </aside>
+  </div>
+</div>
+</body>
+</html>

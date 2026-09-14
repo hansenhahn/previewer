@@ -31,6 +31,7 @@ export interface Manifest {
   screens: Screen[];
   tags: string[];
   matches: string[];
+  segments: { start: string[]; end: string[] } | null;
 }
 
 export interface ProjectDetail extends ProjectSummary {
@@ -123,11 +124,25 @@ export async function listFiles(projectId: string): Promise<string[]> {
   return body.files;
 }
 
+export type FileVariant = "source" | "original";
+
+export function fileUrl(
+  projectId: string,
+  path: string,
+  variant: FileVariant = "source",
+): string {
+  const base = apiUrl(
+    `/projects/${encodeURIComponent(projectId)}/files/${encodePath(path)}`,
+  );
+  return variant === "original" ? `${base}?variant=original` : base;
+}
+
 export function readFile(
   projectId: string,
   path: string,
-): Promise<{ path: string; content: string; encoding: string }> {
-  return request(apiUrl(`/projects/${encodeURIComponent(projectId)}/files/${encodePath(path)}`));
+  variant: FileVariant = "source",
+): Promise<{ path: string; content: string; encoding: string; variant: string }> {
+  return request(fileUrl(projectId, path, variant));
 }
 
 export function saveFile(projectId: string, path: string, content: string): Promise<unknown> {

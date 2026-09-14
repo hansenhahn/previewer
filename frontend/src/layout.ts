@@ -17,10 +17,14 @@ function stripTags(line: string, tags: string[]): string {
   return result;
 }
 
+function matchesAtStart(line: string, patterns: string[]): boolean {
+  return patterns.some((pattern) => line.search(new RegExp(pattern)) === 0);
+}
+
 function pivotLine(lines: string[], matches: string[], cursorLine: number): number {
   let index = Math.min(cursorLine, lines.length - 1);
   while (index >= 0) {
-    if (matches.some((pattern) => lines[index].search(new RegExp(pattern)) === 0)) {
+    if (matchesAtStart(lines[index], matches)) {
       return index + 1;
     }
     index -= 1;
@@ -50,8 +54,13 @@ export function computeLayout(
       break;
     }
 
+    const stripped = stripTags(lines[lineIndex], tags);
+    if (matches.length > 0 && matchesAtStart(stripped, matches)) {
+      break;
+    }
+
     let x = screen.x;
-    for (const character of stripTags(lines[lineIndex], tags)) {
+    for (const character of stripped) {
       const codepoint = character.codePointAt(0) ?? 0;
       const sprite = atlas.glyphs[String(codepoint)];
       const advance = sprite ? sprite.advance : atlas.default_advance;

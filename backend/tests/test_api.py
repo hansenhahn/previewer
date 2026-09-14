@@ -153,3 +153,31 @@ def test_background_traversal_name_rejected(client):
     project_id = upload(client).get_json()["id"]
     response = client.get(f"/api/projects/{project_id}/backgrounds/..")
     assert response.status_code == 404
+
+
+def test_read_original_variant(client):
+    project_id = upload(client).get_json()["id"]
+    response = client.get(
+        f"/api/projects/{project_id}/files/texts/cap01.txt?variant=original"
+    )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["content"] == "original"
+    assert body["variant"] == "original"
+
+
+def test_read_original_missing(client):
+    project_id = upload(client).get_json()["id"]
+    response = client.get(
+        f"/api/projects/{project_id}/files/texts/nope.txt?variant=original"
+    )
+    assert response.status_code == 404
+
+
+def test_read_source_variant_unchanged(client):
+    project_id = upload(client).get_json()["id"]
+    response = client.get(
+        f"/api/projects/{project_id}/files/texts/cap01.txt?variant=source"
+    )
+    assert response.status_code == 200
+    assert response.get_json()["content"] == "texto"

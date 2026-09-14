@@ -153,15 +153,33 @@ def list_files(project_id):
     return jsonify(files=files)
 
 
+def _original_path(manifest, relpath: str) -> str:
+    original_root = manifest.texts.original
+    if not original_root:
+        raise NotFoundError("projeto não possui texto original")
+    prefix = manifest.texts.source.rstrip("/") + "/"
+    if not relpath.startswith(prefix):
+        raise NotFoundError("arquivo não encontrado")
+    return original_root.rstrip("/") + "/" + relpath[len(prefix):]
+
+
 @bp.get("/projects/<project_id>/files/<path:relpath>")
 def read_file(project_id, relpath):
     project = _project(project_id)
     manifest = _manifest(project)
-    data = _storage().read_file(_owner(), str(project.id), relpath)
+    variant = request.args.get("variant", "source")
+    if variant == "original":
+        target = _original_path(manifest, relpath)
+    elif variant == "source":
+        target = relpath
+    else:
+        raise ApiError("variante inválida")
+    data = _storage().read_file(_owner(), str(project.id), target)
     return jsonify(
         path=relpath,
         content=decode_text(data, manifest.encoding),
         encoding=manifest.encoding,
+        variant=variant,
     )
 
 

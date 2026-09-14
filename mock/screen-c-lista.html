@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mock tela C - lista com filtro</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; font-size: 14px; color: #1f2937; background: #eef0f3; height: 100vh; }
+  .backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh; }
+  .dialog { width: min(560px, 94vw); max-height: 74vh; display: flex; flex-direction: column; background: #fff; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.35); overflow: hidden; }
+  .search { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; }
+  .search input { border: 0; outline: none; font: inherit; flex: 1; padding: 4px 0; }
+  .hint { font-size: 11px; color: #9aa4ad; }
+  .list { overflow: auto; padding: 6px; }
+  .item { display: flex; align-items: center; gap: 12px; width: 100%; border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 8px 10px; cursor: pointer; text-align: left; }
+  .item:hover { background: #f3f4f6; }
+  .item.active { border-color: #2563eb; background: #eff6ff; }
+  .thumb { width: 72px; height: 54px; border-radius: 4px; border: 1px solid #d6dade; image-rendering: pixelated; background: #334155; flex: 0 0 auto; }
+  .thumb.t1 { background: linear-gradient(135deg,#8a6d3b,#c9a15a); }
+  .thumb.t2 { background: linear-gradient(135deg,#2f5d50,#6aa892); }
+  .thumb.t3 { background: linear-gradient(135deg,#3b4a6b,#7f93c4); }
+  .thumb.t4 { background: linear-gradient(135deg,#6b3b3b,#c47f7f); }
+  .thumb.t5 { background: linear-gradient(135deg,#4a4a4a,#9aa4ad); }
+  .thumb.t6 { background: linear-gradient(135deg,#5d4a2f,#b08a4f); }
+  .meta { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .meta .name { font-weight: 600; }
+  .meta .desc { font-size: 12px; color: #6b7280; }
+  .check { color: #2563eb; }
+</style>
+</head>
+<body>
+<div class="backdrop">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Escolher tela">
+    <div class="search">
+      <span>🔎</span>
+      <input placeholder="Buscar tela…" value="">
+      <span class="hint">Enter aplica · Esc fecha</span>
+    </div>
+    <div class="list">
+      <button class="item active"><span class="thumb t1"></span><span class="meta"><span class="name">Textos Normais</span><span class="desc">fontevent · y 141 · linha 16</span></span><span class="check">✓</span></button>
+      <button class="item"><span class="thumb t2"></span><span class="meta"><span class="name">Páginas do Diário</span><span class="desc">fontevent · y 10 · linha 15</span></span></button>
+      <button class="item"><span class="thumb t3"></span><span class="meta"><span class="name">Enigmas</span><span class="desc">fontevent · y 12 · linha 14</span></span></button>
+      <button class="item"><span class="thumb t4"></span><span class="meta"><span class="name">Comentários</span><span class="desc">fontevent · y 150 · linha 14</span></span></button>
+      <button class="item"><span class="thumb t5"></span><span class="meta"><span class="name">Perfis</span><span class="desc">fontevent · y 20 · linha 15</span></span></button>
+      <button class="item"><span class="thumb t6"></span><span class="meta"><span class="name">Nomes</span><span class="desc">fontevent · y 30 · linha 14</span></span></button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

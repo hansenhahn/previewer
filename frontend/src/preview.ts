@@ -6,6 +6,8 @@ import { buildDrawCommands } from "./render";
 export const SCREEN_WIDTH = 256;
 export const SCREEN_HEIGHT = 192;
 
+const TEXT_COLOR = "#1f2937";
+
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -13,6 +15,20 @@ function loadImage(url: string): Promise<HTMLImageElement> {
     image.onerror = () => reject(new Error(`falha ao carregar ${url}`));
     image.src = url;
   });
+}
+
+function tint(source: HTMLImageElement, color: string): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = source.width;
+  canvas.height = source.height;
+  const context = canvas.getContext("2d");
+  if (context) {
+    context.drawImage(source, 0, 0);
+    context.globalCompositeOperation = "source-in";
+    context.fillStyle = color;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  return canvas;
 }
 
 export class Preview {
@@ -25,7 +41,7 @@ export class Preview {
   private tags: string[] = [];
   private font?: string;
   private atlas?: AtlasMetrics;
-  private atlasImage?: HTMLImageElement;
+  private atlasDrawable?: HTMLCanvasElement;
   private backgroundImage?: HTMLImageElement;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -52,15 +68,16 @@ export class Preview {
     if (this.font !== screen.font || !this.atlas) {
       this.font = screen.font;
       this.atlas = await getAtlas(projectId, screen.font);
-      this.atlasImage = await loadImage(atlasImageUrl(projectId, screen.font));
+      const image = await loadImage(atlasImageUrl(projectId, screen.font));
+      this.atlasDrawable = tint(image, TEXT_COLOR);
     }
     this.backgroundImage = await this.getBackground(
       backgroundUrl(projectId, screen.background),
     );
   }
 
-  render(text: string): void {
-    if (!this.projectId || !this.screen || !this.atlas || !this.atlasImage) {
+  render(text: string, cursorLine = 0): void {
+    if (!this.projectId || !this.screen || !this.atlas || !this.atlasDrawable) {
       return;
     }
     const context = this.context;
@@ -76,10 +93,11 @@ export class Preview {
       this.atlas,
       this.matches,
       this.tags,
+      cursorLine,
     );
     for (const command of buildDrawCommands(result.glyphs, this.atlas)) {
       context.drawImage(
-        this.atlasImage,
+        this.atlasDrawable,
         command.sx,
         command.sy,
         command.sw,

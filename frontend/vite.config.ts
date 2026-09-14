@@ -3,6 +3,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   base: "/static/dist/",
   build: {
+    target: "es2022",
+    cssTarget: "chrome120",
     outDir: "../backend/web/static/dist",
     emptyOutDir: true,
   },

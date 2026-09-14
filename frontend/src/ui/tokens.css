@@ -1,0 +1,43 @@
+:root {
+  color-scheme: light dark;
+
+  --pv-font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pv-font-family-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --pv-font-size: 14px;
+
+  --pv-space-2xs: 0.125rem;
+  --pv-space-xs: 0.25rem;
+  --pv-space-s: 0.5rem;
+  --pv-space-m: 0.75rem;
+  --pv-space-l: 1rem;
+  --pv-space-xl: 1.5rem;
+
+  --pv-radius-s: 4px;
+  --pv-radius-m: 6px;
+
+  --pv-shadow-s: 0 1px 2px rgb(0 0 0 / 0.08);
+
+  --pv-color-bg: #f6f7f9;
+  --pv-color-surface: #ffffff;
+  --pv-color-surface-muted: #eef0f3;
+  --pv-color-text: #1c1e21;
+  --pv-color-text-muted: #5c6770;
+  --pv-color-border: #d6dade;
+  --pv-color-brand: #2563eb;
+  --pv-color-brand-contrast: #ffffff;
+  --pv-color-danger: #c0392b;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --pv-color-bg: #14171a;
+  --pv-color-surface: #1c2024;
+  --pv-color-surface-muted: #24292e;
+  --pv-color-text: #e8eaed;
+  --pv-color-text-muted: #9aa4ad;
+  --pv-color-border: #333a40;
+  --pv-color-brand: #5b8def;
+  --pv-color-brand-contrast: #0b1220;
+  --pv-color-danger: #e06c5a;
+}

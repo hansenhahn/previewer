@@ -1,0 +1,50 @@
+{
+  "cases": [
+    {
+      "name": "sem_config",
+      "start": [],
+      "end": [],
+      "text": "a\nb\nc",
+      "segments": [],
+      "reconstructed": "a\nb\nc"
+    },
+    {
+      "name": "bloco_simples",
+      "start": ["^<d>"],
+      "end": ["^</d>"],
+      "text": "<d>\nA\n</d>\ntail",
+      "segments": [{ "text": "<d>\nA\n</d>", "body": "A", "start_line": 0, "end_line": 2 }],
+      "reconstructed": "<d>\nA\n</d>\ntail"
+    },
+    {
+      "name": "varios_blocos",
+      "start": ["^<d>"],
+      "end": ["^</d>"],
+      "text": "<d>\nA\n</d>\nSEP\n<d>\nB\n</d>",
+      "segments": [
+        { "text": "<d>\nA\n</d>", "body": "A", "start_line": 0, "end_line": 2 },
+        { "text": "<d>\nB\n</d>", "body": "B", "start_line": 4, "end_line": 6 }
+      ],
+      "reconstructed": "<d>\nA\n</d>\nSEP\n<d>\nB\n</d>"
+    },
+    {
+      "name": "sem_fim",
+      "start": ["^<d>"],
+      "end": [],
+      "text": "<d>\nA\n<d>\nB",
+      "segments": [
+        { "text": "<d>\nA", "body": "A", "start_line": 0, "end_line": 1 },
+        { "text": "<d>\nB", "body": "B", "start_line": 2, "end_line": 3 }
+      ],
+      "reconstructed": "<d>\nA\n<d>\nB"
+    },
+    {
+      "name": "preamble_suffix",
+      "start": ["^<d>"],
+      "end": ["^</d>"],
+      "text": "HEAD\n<d>\nA\n</d>\nFOOT",
+      "segments": [{ "text": "<d>\nA\n</d>", "body": "A", "start_line": 1, "end_line": 3 }],
+      "reconstructed": "HEAD\n<d>\nA\n</d>\nFOOT"
+    }
+  ]
+}
