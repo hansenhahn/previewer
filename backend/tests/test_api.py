@@ -6,6 +6,8 @@ from sqlalchemy.pool import StaticPool
 from web import create_app
 from web.config import Settings
 from infra.db import Database
+from infra.identity import Identity
+from infra.repository import UserRepository
 from infra.storage import FilesystemStorage
 from tests.fixtures.project import build_bundle
 
@@ -18,14 +20,39 @@ def client(tmp_path):
         poolclass=StaticPool,
     )
     database.create_all()
+    users = UserRepository(database.session_factory)
+    user = users.upsert_identity(
+        Identity(provider="github", external_id="1", login="tester")
+    )
+    settings = Settings(
+        storage_root=str(tmp_path),
+        database_url="sqlite+pysqlite:///:memory:",
+        secret_key="test",
+        github_allowed_users="tester",
+    )
+    app = create_app(
+        settings,
+        database=database,
+        storage=FilesystemStorage(tmp_path),
+        users=users,
+    )
+    app.config.update(TESTING=True)
+    with app.test_client() as client:
+        with client.session_transaction() as session:
+            session["user_id"] = str(user.id)
+        yield client
+
+
+def test_api_requires_authentication(tmp_path):
     settings = Settings(
         storage_root=str(tmp_path),
         database_url="sqlite+pysqlite:///:memory:",
         secret_key="test",
     )
-    app = create_app(settings, database=database, storage=FilesystemStorage(tmp_path))
+    app = create_app(settings, database=Database("sqlite+pysqlite:///:memory:"))
     app.config.update(TESTING=True)
-    return app.test_client()
+    response = app.test_client().get("/api/projects")
+    assert response.status_code == 401
 
 
 def upload(client, **kwargs):

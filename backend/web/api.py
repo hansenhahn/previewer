@@ -7,13 +7,25 @@ from domain.errors import FontDecodeError, UnsupportedFontError
 from domain.project import ManifestError, parse_manifest
 from domain.text import decode_text, encode_text
 from infra.atlas import generate as generate_atlas
+from infra.github_import import refresh_repositories
+from infra.github_source import GitHubSourceError, import_repository
+from infra.identity import IdentityError
 from infra.ingestion import InvalidBundleError, ProjectNameConflict, import_bundle
 from infra.storage import PathTraversalError
+from .auth import current_user
 
-DEFAULT_OWNER = "local"
 MANIFEST_NAME = "manifest.json"
 
 bp = Blueprint("api", __name__, url_prefix="/api")
+
+
+@bp.before_request
+def _require_authentication():
+    if current_user() is None:
+        return (
+            jsonify(error={"code": "unauthorized", "message": "autenticação necessária"}),
+            401,
+        )
 
 
 class ApiError(Exception):
@@ -61,13 +73,23 @@ def _handle_path(error):
     return jsonify(error={"code": "invalid_path", "message": str(error)}), 400
 
 
+@bp.errorhandler(GitHubSourceError)
+def _handle_github(error):
+    return jsonify(error={"code": "github_error", "message": str(error)}), 422
+
+
+@bp.errorhandler(IdentityError)
+def _handle_identity(error):
+    return jsonify(error={"code": "github_error", "message": str(error)}), 422
+
+
 @bp.errorhandler(FileNotFoundError)
 def _handle_not_found(error):
     return jsonify(error={"code": "not_found", "message": "recurso não encontrado"}), 404
 
 
 def _owner() -> str:
-    return DEFAULT_OWNER
+    return str(current_user().id)
 
 
 def _storage():
@@ -78,13 +100,21 @@ def _projects():
     return current_app.extensions["projects"]
 
 
+def _repositories():
+    return current_app.extensions.get("repositories")
+
+
+def _users():
+    return current_app.extensions.get("users")
+
+
 def _project(project_id: str):
     try:
         key = uuid.UUID(project_id)
     except (ValueError, AttributeError, TypeError):
         raise NotFoundError("projeto não encontrado")
     project = _projects().get(key)
-    if project is None:
+    if project is None or project.owner_id != _owner():
         raise NotFoundError("projeto não encontrado")
     return project
 
@@ -128,6 +158,66 @@ def create_project():
         repository=_projects(),
         owner_id=_owner(),
         data=upload.read(),
+    )
+    return jsonify(_project_dict(project)), 201
+
+
+def _repository_dict(repo) -> dict:
+    return {
+        "provider": repo.provider,
+        "full_name": repo.full_name,
+        "default_branch": repo.default_branch,
+        "fork": repo.fork,
+        "manifest_ok": repo.manifest_ok,
+        "manifest_error": repo.manifest_error,
+    }
+
+
+@bp.get("/github/repos")
+def list_github_repos():
+    store = _repositories()
+    repos = store.list_for_user(current_user().id) if store is not None else []
+    return jsonify(repositories=[_repository_dict(repo) for repo in repos])
+
+
+@bp.post("/github/repos/refresh")
+def refresh_github_repos():
+    user = current_user()
+    store = _repositories()
+    if store is None:
+        return jsonify(repositories=[])
+    token = _users().access_token_for(user.id)
+    if not token:
+        raise GitHubSourceError("sem token do provedor; faça login novamente")
+    repos = refresh_repositories(
+        store=store,
+        provider=current_app.extensions["identity_provider"],
+        user_id=user.id,
+        token=token,
+    )
+    return jsonify(repositories=[_repository_dict(repo) for repo in repos])
+
+
+@bp.post("/projects/github")
+def import_github_project():
+    body = request.get_json(silent=True) or {}
+    full_name = body.get("full_name")
+    if not isinstance(full_name, str) or not full_name.strip():
+        raise ApiError("campo 'full_name' ausente ou inválido")
+    full_name = full_name.strip()
+    store = _repositories()
+    record = store.find(current_user().id, full_name) if store is not None else None
+    if record is None:
+        raise NotFoundError("repositório não encontrado na conta")
+    if not record.manifest_ok:
+        raise GitHubSourceError("repositório não possui manifest.json válido")
+    project, _ = import_repository(
+        storage=_storage(),
+        repository=_projects(),
+        source=current_app.extensions["github_source"],
+        owner_id=_owner(),
+        full_name=record.full_name,
+        default_branch=record.default_branch,
     )
     return jsonify(_project_dict(project)), 201
 

@@ -1,4 +1,4 @@
-import type { ProjectDetail, ProjectSummary } from "./api";
+import type { AuthConfig, AuthUser, ProjectDetail, ProjectSummary } from "./api";
 import type { OpenDocument } from "./documents";
 
 export interface AppState {
@@ -9,6 +9,8 @@ export interface AppState {
   activePath?: string;
   currentScreen?: string;
   showOriginal: boolean;
+  auth?: AuthUser;
+  authConfig?: AuthConfig;
 }
 
 export const state: AppState = {

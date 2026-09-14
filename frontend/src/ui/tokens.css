@@ -25,7 +25,11 @@
   --pv-color-border: #d6dade;
   --pv-color-brand: #2563eb;
   --pv-color-brand-contrast: #ffffff;
+  --pv-color-success: #2e7d32;
+  --pv-color-success-soft: #e8f5e9;
   --pv-color-danger: #c0392b;
+  --pv-color-scroll-thumb: #c3c9cf;
+  --pv-color-scroll-thumb-hover: #a7afb7;
 }
 
 [data-theme="dark"] {
@@ -39,5 +43,9 @@
   --pv-color-border: #333a40;
   --pv-color-brand: #5b8def;
   --pv-color-brand-contrast: #0b1220;
+  --pv-color-success: #66bb6a;
+  --pv-color-success-soft: #1e3a2a;
   --pv-color-danger: #e06c5a;
+  --pv-color-scroll-thumb: #3c444c;
+  --pv-color-scroll-thumb-hover: #4f5a63;
 }

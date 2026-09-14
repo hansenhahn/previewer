@@ -63,3 +63,19 @@ def test_delete_file(storage):
 
 def test_is_storage_backend(storage):
     assert isinstance(storage, StorageBackend)
+
+
+def test_list_files_excludes_git_internals(storage):
+    storage.create_project("local", "p1")
+    storage.write_file("local", "p1", "texts/a.txt", b"a")
+    storage.write_file("local", "p1", ".git/HEAD", b"ref")
+    assert storage.list_files("local", "p1") == ["texts/a.txt"]
+
+
+def test_local_path_and_delete_project(storage):
+    storage.create_project("local", "p1")
+    storage.write_file("local", "p1", "a.txt", b"a")
+    path = storage.local_path("local", "p1")
+    assert path.is_dir() and (path / "a.txt").is_file()
+    storage.delete_project("local", "p1")
+    assert not path.exists()

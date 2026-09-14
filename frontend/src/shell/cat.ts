@@ -4,6 +4,7 @@ import {
   reconstruct,
   segment,
   segmentBody,
+  segmentBySeparators,
   segmentsOf,
   type AlignedPair,
   type Part,
@@ -16,7 +17,13 @@ export interface CatOptions {
 
 export interface CatController {
   element: HTMLElement;
-  load(translated: string, original: string | null, start: string[], end: string[]): void;
+  load(
+    translated: string,
+    original: string | null,
+    start: string[],
+    end: string[],
+    separators?: string[],
+  ): void;
   focusSegment(index: number): void;
   move(delta: number): void;
 }
@@ -67,11 +74,12 @@ export function createCat(options: CatOptions): CatController {
     focusSegment(Math.max(0, Math.min(boxes.length - 1, active + delta)));
   }
 
-  function load(
+  function   load(
     translated: string,
     original: string | null,
     start: string[],
     end: string[],
+    separators: string[] = [],
   ): void {
     element.replaceChildren();
     boxes = [];
@@ -79,7 +87,7 @@ export function createCat(options: CatOptions): CatController {
     pairs = [];
     translatedParts = [];
 
-    if (start.length === 0) {
+    if (start.length === 0 && separators.length === 0) {
       const message = document.createElement("p");
       message.className = "pv-muted";
       message.textContent = "Segmentação não configurada para este projeto.";
@@ -87,8 +95,13 @@ export function createCat(options: CatOptions): CatController {
       return;
     }
 
-    translatedParts = segment(translated, start, end);
-    const originalParts = original ? segment(original, start, end) : [];
+    const split = (value: string): Part[] =>
+      separators.length > 0
+        ? segmentBySeparators(value, separators)
+        : segment(value, start, end);
+
+    translatedParts = split(translated);
+    const originalParts = original ? split(original) : [];
     pairs = align(originalParts, translatedParts);
     const originalCount = segmentsOf(originalParts).length;
     const translatedCount = segmentsOf(translatedParts).length;

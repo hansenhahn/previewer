@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mock A — Importar do GitHub (lista com status à direita)</title>
+<style>
+  :root{--bg:#f6f7f9;--surface:#fff;--muted:#5c6770;--border:#d6dade;--text:#1c1e21;--brand:#2563eb;--brand-contrast:#fff;--success:#2e7d32;--success-soft:#e8f5e9;--neutral-soft:#eef0f3;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,sans-serif;font-size:14px;color:var(--text);background:#0f172a73;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .dialog{width:min(820px,94vw);max-height:86vh;display:flex;flex-direction:column;background:var(--surface);border-radius:10px;box-shadow:0 24px 60px #00000059;overflow:hidden}
+  .head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+  .head h2{margin:0;font-size:16px}
+  .actions{display:flex;gap:6px}
+  .icon-btn{border:0;background:transparent;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px;border-radius:6px}
+  .icon-btn:hover{background:var(--neutral-soft)}
+  .status{margin:0;padding:10px 16px 0;color:var(--muted);font-size:.85rem}
+  .list{overflow:auto;padding:8px 8px 12px}
+  .row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:10px 12px}
+  .row + .row{border-top:1px solid var(--border)}
+  .row:hover:not(.disabled){background:var(--neutral-soft);border-radius:8px}
+  .name{font-weight:600}
+  .meta{color:var(--muted);font-size:.78rem;margin-top:2px}
+  .right{display:flex;align-items:center;gap:10px}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;padding:2px 9px;border-radius:999px;white-space:nowrap}
+  .chip.ok{color:var(--success);background:var(--success-soft)}
+  .chip.no{color:var(--muted);background:var(--neutral-soft)}
+  .import{border:0;border-radius:6px;padding:5px 14px;background:var(--brand);color:var(--brand-contrast);font-weight:600;cursor:pointer}
+  .row.disabled{opacity:.62}
+  .row.disabled .import{display:none}
+  .foot{padding:10px 16px;border-top:1px solid var(--border);color:var(--muted);font-size:.78rem}
+</style>
+</head>
+<body>
+<div class="dialog">
+  <div class="head">
+    <h2>Importar do GitHub</h2>
+    <div class="actions"><button class="icon-btn" title="Atualizar">⟳</button><button class="icon-btn" title="Fechar">✕</button></div>
+  </div>
+  <p class="status">2 de 11 repositórios têm manifest válido e podem ser importados.</p>
+  <div class="list">
+    <div class="row">
+      <div><div class="name">hansenhahn/nds-template</div><div class="meta">main</div></div>
+      <div class="right"><span class="chip ok">✓ importável</span><button class="import">Importar</button></div>
+    </div>
+    <div class="row">
+      <div><div class="name">hansenhahn/fork-playton-2</div><div class="meta">fork · translation</div></div>
+      <div class="right"><span class="chip ok">✓ importável</span><button class="import">Importar</button></div>
+    </div>
+    <div class="row disabled">
+      <div><div class="name">hansenhahn/ace-attorney-4-ptbr</div><div class="meta">master · manifest.json ausente</div></div>
+      <div class="right"><span class="chip no">● sem manifest</span></div>
+    </div>
+    <div class="row disabled">
+      <div><div class="name">hansenhahn/kheartsds</div><div class="meta">master · manifest.json ausente</div></div>
+      <div class="right"><span class="chip no">● sem manifest</span></div>
+    </div>
+    <div class="row disabled">
+      <div><div class="name">hansenhahn/mmbn-2</div><div class="meta">master · manifest.json ausente</div></div>
+      <div class="right"><span class="chip no">● sem manifest</span></div>
+    </div>
+    <div class="row disabled">
+      <div><div class="name">hansenhahn/playton-1</div><div class="meta">master · manifest.json ausente</div></div>
+      <div class="right"><span class="chip no">● sem manifest</span></div>
+    </div>
+    <div class="row disabled">
+      <div><div class="name">hansenhahn/playton-3</div><div class="meta">master · manifest.json ausente</div></div>
+      <div class="right"><span class="chip no">● sem manifest</span></div>
+    </div>
+    <div class="row disabled">
+      <div><div class="name">hansenhahn/zelda-alttp</div><div class="meta">main · manifest.json ausente</div></div>
+      <div class="right"><span class="chip no">● sem manifest</span></div>
+    </div>
+  </div>
+  <div class="foot">Mock A — nome à esquerda, status + ação à direita.</div>
+</div>
+</body>
+</html>

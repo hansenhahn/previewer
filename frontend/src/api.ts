@@ -31,7 +31,7 @@ export interface Manifest {
   screens: Screen[];
   tags: string[];
   matches: string[];
-  segments: { start: string[]; end: string[] } | null;
+  segments: { start: string[]; end: string[]; separators: string[] } | null;
 }
 
 export interface ProjectDetail extends ProjectSummary {
@@ -62,8 +62,64 @@ export interface LayoutGlyph {
   y: number;
 }
 
+export interface AuthConfig {
+  provider: string;
+  label: string;
+  login_url: string;
+}
+
+export interface AuthUser {
+  id: string;
+  login: string;
+  email: string | null;
+  avatar_url: string | null;
+}
+
+export interface AuthState {
+  authenticated: boolean;
+  user?: AuthUser;
+}
+
+export interface GithubRepo {
+  provider: string;
+  full_name: string;
+  default_branch: string;
+  fork: boolean;
+  manifest_ok: boolean | null;
+  manifest_error: string | null;
+}
+
 export function apiUrl(path: string): string {
   return `/api${path}`;
+}
+
+export async function listGithubRepos(): Promise<GithubRepo[]> {
+  const body = await request<{ repositories: GithubRepo[] }>("/api/github/repos");
+  return body.repositories;
+}
+
+export async function refreshGithubRepos(): Promise<GithubRepo[]> {
+  const body = await request<{ repositories: GithubRepo[] }>(
+    "/api/github/repos/refresh",
+    { method: "POST" },
+  );
+  return body.repositories;
+}
+
+export function importGithubProject(fullName: string): Promise<ProjectSummary> {
+  return request<ProjectSummary>(apiUrl("/projects/github"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ full_name: fullName }),
+  });
+}
+
+export function getAuthConfig(): Promise<AuthConfig> {
+  return request<AuthConfig>("/auth/config");
+}
+
+export function getAuthMe(): Promise<AuthState> {
+  return request<AuthState>("/auth/me");
 }
 
 export function atlasImageUrl(projectId: string, font: string): string {

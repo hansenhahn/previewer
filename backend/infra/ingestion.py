@@ -21,7 +21,7 @@ class ProjectNameConflict(IngestionError):
     pass
 
 
-def _is_unsafe(name: str) -> bool:
+def is_unsafe_path(name: str) -> bool:
     path = PurePosixPath(name)
     return (
         not name
@@ -35,8 +35,25 @@ def _is_unsafe(name: str) -> bool:
 
 def _validate_members(names) -> None:
     for name in names:
-        if _is_unsafe(name):
+        if is_unsafe_path(name):
             raise InvalidBundleError(f"membro com caminho inválido: {name!r}")
+
+
+def ensure_referenced_assets(manifest, available) -> None:
+    for asset in (*manifest.fonts, *manifest.backgrounds):
+        if asset.path not in available:
+            raise InvalidBundleError(f"arquivo referenciado ausente: {asset.path}")
+
+
+def create_project_for(repository, owner_id: str, manifest, project_id=None):
+    try:
+        return repository.create(
+            owner_id, manifest.name, manifest.encoding, project_id=project_id
+        )
+    except IntegrityError as exc:
+        raise ProjectNameConflict(
+            f"já existe um projeto chamado {manifest.name!r}"
+        ) from exc
 
 
 def import_bundle(*, storage, repository, owner_id: str, data: bytes):
@@ -52,17 +69,9 @@ def import_bundle(*, storage, repository, owner_id: str, data: bytes):
         raise InvalidBundleError("manifesto ausente no bundle")
 
     manifest = parse_manifest(archive.read(MANIFEST_NAME))
+    ensure_referenced_assets(manifest, set(names))
 
-    for asset in (*manifest.fonts, *manifest.backgrounds):
-        if asset.path not in names:
-            raise InvalidBundleError(f"arquivo referenciado ausente: {asset.path}")
-
-    try:
-        project = repository.create(owner_id, manifest.name, manifest.encoding)
-    except IntegrityError as exc:
-        raise ProjectNameConflict(
-            f"já existe um projeto chamado {manifest.name!r}"
-        ) from exc
+    project = create_project_for(repository, owner_id, manifest)
 
     project_id = str(project.id)
     written = []

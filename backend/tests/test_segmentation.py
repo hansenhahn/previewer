@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from domain.segmentation import align, reconstruct, segment
+from domain.segmentation import align, reconstruct, segment, segment_by_separators
 
 CASES = json.loads(
     (Path(__file__).parents[2] / "frontend" / "src" / "segmentation_cases.json").read_text(
@@ -40,3 +40,11 @@ def test_align_pairs_by_order_and_marks_unpaired():
     assert len(pairs) == 2
     assert pairs[0].original is not None and pairs[0].translated is not None
     assert pairs[1].original is not None and pairs[1].translated is None
+
+
+def test_segment_by_separators_yields_blocks():
+    text = "[h]\nナレーション\n!***!\n<V0000>oi\n!***!\n[h2]\nNome\n!***!\n<V0010>tchau\n!***!"
+    parts = segment_by_separators(text, (r"^\[.+\]$", r"^!.*!$"))
+    bodies = [part.segment.body for part in parts if part.is_segment]
+    assert bodies == ["ナレーション", "<V0000>oi", "Nome", "<V0010>tchau"]
+    assert reconstruct(parts) == text

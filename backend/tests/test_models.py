@@ -1,4 +1,4 @@
-from infra.models import Project
+from infra.models import Project, User, UserIdentity, UserRepository
 
 
 def test_project_columns():
@@ -16,3 +16,28 @@ def test_project_columns():
 def test_project_unique_constraint_by_owner_and_name():
     names = {constraint.name for constraint in Project.__table__.constraints}
     assert "uq_projects_owner_name" in names
+
+
+def test_user_identity_columns_and_unique_constraint():
+    columns = set(UserIdentity.__table__.columns.keys())
+    assert {"id", "user_id", "provider", "external_id", "login", "email", "avatar_url"} <= columns
+    names = {constraint.name for constraint in UserIdentity.__table__.constraints}
+    assert "uq_user_identities_provider_external" in names
+    assert "users" == User.__tablename__
+
+
+def test_user_repository_columns_and_unique_constraint():
+    columns = set(UserRepository.__table__.columns.keys())
+    assert {
+        "id",
+        "user_id",
+        "provider",
+        "full_name",
+        "default_branch",
+        "fork",
+        "manifest_ok",
+        "manifest_error",
+        "checked_at",
+    } <= columns
+    names = {constraint.name for constraint in UserRepository.__table__.constraints}
+    assert "uq_user_repositories_user_provider_name" in names

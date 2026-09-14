@@ -1,5 +1,7 @@
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/callout/callout.js";
+import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
+import "@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js";
 import "@awesome.me/webawesome/dist/components/select/select.js";
 import "@awesome.me/webawesome/dist/components/toast/toast.js";
 
@@ -9,6 +11,8 @@ import {
   type ButtonVariant,
   type CalloutHandle,
   type CalloutVariant,
+  type MenuHandle,
+  type MenuOptions,
   type SelectOptions,
   type Theme,
   type ToastOptions,
@@ -72,6 +76,45 @@ function select(options: SelectOptions): HTMLElement {
   return element;
 }
 
+function menu(options: MenuOptions): MenuHandle {
+  const element = document.createElement("wa-dropdown") as HTMLElement & { open: boolean };
+  element.className = "pv-menu";
+  element.setAttribute("placement", "bottom-end");
+  options.trigger.setAttribute("slot", "trigger");
+  element.append(options.trigger);
+  if (options.header) {
+    element.append(options.header);
+  }
+  for (const item of options.items) {
+    const entry = document.createElement("wa-dropdown-item");
+    if (item.danger) {
+      entry.setAttribute("variant", "danger");
+    }
+    if (item.icon) {
+      const glyph = icon(item.icon);
+      glyph.setAttribute("slot", "icon");
+      entry.append(glyph);
+    }
+    const label = document.createElement("span");
+    label.textContent = item.label;
+    entry.append(label);
+    entry.addEventListener("click", () => {
+      element.open = false;
+      item.onSelect();
+    });
+    element.append(entry);
+  }
+  return {
+    element,
+    open() {
+      element.open = true;
+    },
+    close() {
+      element.open = false;
+    },
+  };
+}
+
 function icon(name: string, label?: string): HTMLElement {
   const element = document.createElement("wa-icon");
   element.setAttribute("name", name);
@@ -128,4 +171,4 @@ function applyTheme(theme: Theme): void {
   }
 }
 
-export const kit: UiKit = { button, select, icon, callout, toast, applyTheme };
+export const kit: UiKit = { button, select, icon, menu, callout, toast, applyTheme };

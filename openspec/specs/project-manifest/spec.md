@@ -44,13 +44,18 @@ a importação.
 ### Requirement: Configuração de segmentação
 
 O manifesto SHALL aceitar uma configuração opcional de segmentação com listas de
-padrões de início e fim de bloco, disponibilizando-a para a visão por segmentos
-sem invalidar projetos que não a declarem.
+padrões de início e fim de bloco e/ou de **separadores**, disponibilizando-a para a
+visão por segmentos sem invalidar projetos que não a declarem.
 
 #### Scenario: Configuração presente
 
 - **WHEN** o manifesto declara padrões de início e fim
 - **THEN** eles ficam disponíveis para segmentar os textos do projeto
+
+#### Scenario: Configuração com separadores
+
+- **WHEN** o manifesto declara padrões de separadores
+- **THEN** os blocos entre as linhas separadoras ficam disponíveis como segmentos
 
 #### Scenario: Configuração ausente
 
