@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 
-from .models import Project, User, UserIdentity
+from .models import Change, Project, User, UserIdentity
 from .models import UserRepository as UserRepositoryModel
 
 
@@ -11,10 +11,22 @@ class ProjectRepository:
         self.session_factory = session_factory
 
     def create(
-        self, owner_id: str, name: str, encoding: str = "windows-1252", project_id=None
+        self,
+        owner_id: str,
+        name: str,
+        encoding: str = "windows-1252",
+        project_id=None,
+        upstream: str | None = None,
+        base_branch: str | None = None,
     ) -> Project:
         with self.session_factory() as session:
-            values = {"owner_id": owner_id, "name": name, "encoding": encoding}
+            values = {
+                "owner_id": owner_id,
+                "name": name,
+                "encoding": encoding,
+                "upstream": upstream,
+                "base_branch": base_branch,
+            }
             if project_id is not None:
                 values["id"] = project_id
             project = Project(**values)
@@ -91,6 +103,77 @@ class UserRepository:
                 user = session.get(User, link.user_id)
             session.commit()
             return user
+
+
+class ChangeRepository:
+    def __init__(self, session_factory):
+        self.session_factory = session_factory
+
+    def create(
+        self,
+        project_id,
+        user_id,
+        branch: str,
+        title: str | None = None,
+        base_commit: str | None = None,
+        change_id=None,
+        status: str = "draft",
+        pr_number: int | None = None,
+    ) -> Change:
+        with self.session_factory() as session:
+            values = {
+                "project_id": project_id,
+                "user_id": user_id,
+                "branch": branch,
+                "title": title,
+                "base_commit": base_commit,
+                "status": status,
+                "pr_number": pr_number,
+            }
+            if change_id is not None:
+                values["id"] = change_id
+            change = Change(**values)
+            session.add(change)
+            session.commit()
+            return change
+
+    def get(self, change_id) -> Change | None:
+        with self.session_factory() as session:
+            return session.get(Change, change_id)
+
+    def find(self, project_id, user_id, branch: str) -> Change | None:
+        with self.session_factory() as session:
+            statement = select(Change).where(
+                Change.project_id == project_id,
+                Change.user_id == user_id,
+                Change.branch == branch,
+            )
+            return session.scalars(statement).first()
+
+    def update(self, change_id, **fields) -> Change | None:
+        with self.session_factory() as session:
+            change = session.get(Change, change_id)
+            if change is None:
+                return None
+            for key, value in fields.items():
+                setattr(change, key, value)
+            session.commit()
+            return change
+
+    def delete(self, change_id) -> None:
+        with self.session_factory() as session:
+            change = session.get(Change, change_id)
+            if change is not None:
+                session.delete(change)
+                session.commit()
+
+    def list_for_user(self, user_id, project_id=None) -> list[Change]:
+        with self.session_factory() as session:
+            statement = select(Change).where(Change.user_id == user_id)
+            if project_id is not None:
+                statement = statement.where(Change.project_id == project_id)
+            statement = statement.order_by(Change.updated_at.desc())
+            return list(session.scalars(statement))
 
 
 class RepositoryStore:

@@ -80,6 +80,117 @@ export interface AuthState {
   user?: AuthUser;
 }
 
+export type ChangeStatus =
+  | "draft"
+  | "open"
+  | "changes_requested"
+  | "merged"
+  | "closed";
+
+export interface ChangeInfo {
+  id: string;
+  branch: string;
+  title: string | null;
+  pr_number: number | null;
+  status: ChangeStatus;
+  updated_at: string;
+  resumable?: boolean;
+}
+
+export interface ChangeState {
+  branch: string | null;
+  status: "base" | ChangeStatus;
+  change: ChangeInfo | null;
+  can_publish: boolean;
+}
+
+export interface PublishResult extends ChangeInfo {
+  url: string;
+  created: boolean;
+}
+
+export function getChangeState(projectId: string): Promise<ChangeState> {
+  return request<ChangeState>(
+    apiUrl(`/projects/${encodeURIComponent(projectId)}/changes/state`),
+  );
+}
+
+export async function listChanges(
+  projectId: string,
+  sync = false,
+): Promise<ChangeInfo[]> {
+  const suffix = sync ? "?sync=1" : "";
+  const body = await request<{ changes: ChangeInfo[] }>(
+    apiUrl(`/projects/${encodeURIComponent(projectId)}/changes${suffix}`),
+  );
+  return body.changes;
+}
+
+export function publishChange(
+  projectId: string,
+  changeId: string,
+  title: string,
+  description: string,
+): Promise<PublishResult> {
+  return request<PublishResult>(
+    apiUrl(
+      `/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/publish`,
+    ),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description }),
+    },
+  );
+}
+
+export function resumeChange(projectId: string, changeId: string): Promise<ChangeInfo> {
+  return request<ChangeInfo>(
+    apiUrl(
+      `/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/resume`,
+    ),
+    { method: "POST" },
+  );
+}
+
+export function discardChange(projectId: string, changeId: string): Promise<ChangeInfo> {
+  return request<ChangeInfo>(
+    apiUrl(
+      `/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/discard`,
+    ),
+    { method: "POST" },
+  );
+}
+
+export function backupChange(
+  projectId: string,
+  changeId: string,
+  keepalive = false,
+): Promise<ChangeInfo> {
+  return request<ChangeInfo>(
+    apiUrl(
+      `/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}/backup`,
+    ),
+    { method: "POST", keepalive },
+  );
+}
+
+export function newChange(projectId: string): Promise<ChangeState> {
+  return request<ChangeState>(
+    apiUrl(`/projects/${encodeURIComponent(projectId)}/changes/new`),
+    { method: "POST" },
+  );
+}
+
+export function abandonChange(projectId: string, changeId: string): Promise<unknown> {
+  return request<unknown>(
+    apiUrl(
+      `/projects/${encodeURIComponent(projectId)}/changes/${encodeURIComponent(changeId)}`,
+    ),
+    { method: "DELETE" },
+  );
+}
+
 export interface GithubRepo {
   provider: string;
   full_name: string;
@@ -201,7 +312,11 @@ export function readFile(
   return request(fileUrl(projectId, path, variant));
 }
 
-export function saveFile(projectId: string, path: string, content: string): Promise<unknown> {
+export function saveFile(
+  projectId: string,
+  path: string,
+  content: string,
+): Promise<{ path: string; encoding: string; change?: ChangeInfo }> {
   return request(apiUrl(`/projects/${encodeURIComponent(projectId)}/files/${encodePath(path)}`), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
