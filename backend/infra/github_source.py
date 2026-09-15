@@ -1,4 +1,3 @@
-import os
 import re
 import subprocess
 import urllib.error
@@ -7,6 +6,8 @@ import uuid
 from pathlib import Path
 
 from domain.project import ManifestError, parse_manifest
+from infra.git import command as _command
+from infra.git import environment as _environment
 from infra.ingestion import (
     MANIFEST_NAME,
     InvalidBundleError,
@@ -20,23 +21,6 @@ RAW_ROOT = "https://raw.githubusercontent.com"
 
 class GitHubSourceError(RuntimeError):
     pass
-
-
-def _command(allow_file: bool) -> list[str]:
-    return [
-        "git",
-        "-c",
-        "credential.helper=",
-        "-c",
-        "protocol.file.allow=" + ("always" if allow_file else "never"),
-    ]
-
-
-def _environment() -> dict:
-    env = os.environ.copy()
-    env["GIT_TERMINAL_PROMPT"] = "0"
-    env["GIT_ASKPASS"] = "/bin/true"
-    return env
 
 
 class GitHubSource:
@@ -137,7 +121,17 @@ def check_manifest(full_name: str, branch: str, opener=None):
     return (True, None)
 
 
-def import_repository(*, storage, repository, source, owner_id, full_name, default_branch):
+def import_repository(
+    *,
+    storage,
+    repository,
+    source,
+    owner_id,
+    full_name,
+    default_branch,
+    upstream=None,
+    base_branch=None,
+):
     project_id = uuid.uuid4()
     try:
         storage.create_project(owner_id, str(project_id))
@@ -147,7 +141,12 @@ def import_repository(*, storage, repository, source, owner_id, full_name, defau
             working_copy=storage.local_path(owner_id, str(project_id)),
         )
         project = create_project_for(
-            repository, owner_id, manifest, project_id=project_id
+            repository,
+            owner_id,
+            manifest,
+            project_id=project_id,
+            upstream=upstream,
+            base_branch=base_branch,
         )
     except Exception:
         storage.delete_project(owner_id, str(project_id))

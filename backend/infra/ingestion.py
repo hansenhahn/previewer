@@ -45,10 +45,22 @@ def ensure_referenced_assets(manifest, available) -> None:
             raise InvalidBundleError(f"arquivo referenciado ausente: {asset.path}")
 
 
-def create_project_for(repository, owner_id: str, manifest, project_id=None):
+def create_project_for(
+    repository,
+    owner_id: str,
+    manifest,
+    project_id=None,
+    upstream: str | None = None,
+    base_branch: str | None = None,
+):
     try:
         return repository.create(
-            owner_id, manifest.name, manifest.encoding, project_id=project_id
+            owner_id,
+            manifest.name,
+            manifest.encoding,
+            project_id=project_id,
+            upstream=upstream,
+            base_branch=base_branch,
         )
     except IntegrityError as exc:
         raise ProjectNameConflict(

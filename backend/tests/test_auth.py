@@ -143,10 +143,13 @@ def test_me_exposes_profile():
     with client.session_transaction() as session:
         state = session["oauth_state"]
     client.get(f"/auth/callback?code=abc&state={state}")
-    user = client.get("/auth/me").get_json()["user"]
+    body = client.get("/auth/me").get_json()
+    user = body["user"]
     assert user["login"] == "alice"
     assert user["email"] == "a@b.c"
     assert user["avatar_url"] == "https://avatars.test/alice.png"
+    assert "access_token" not in user
+    assert "access_token" not in body
 
 
 def test_upsert_identity_is_idempotent():

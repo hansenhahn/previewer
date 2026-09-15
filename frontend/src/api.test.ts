@@ -1,6 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { apiUrl, atlasImageUrl, fileUrl, getAuthConfig, getAuthMe, importGithubProject, listGithubRepos } from "./api";
+import {
+  apiUrl,
+  atlasImageUrl,
+  backupChange,
+  discardChange,
+  fileUrl,
+  getAuthConfig,
+  getAuthMe,
+  getChangeState,
+  importGithubProject,
+  listChanges,
+  listGithubRepos,
+  publishChange,
+  resumeChange,
+} from "./api";
 
 describe("helpers de URL", () => {
   it("monta a URL do atlas", () => {
@@ -55,6 +69,82 @@ describe("autenticação", () => {
     const state = await getAuthMe();
     expect(fetchMock).toHaveBeenCalledWith("/auth/me", undefined);
     expect(state.authenticated).toBe(false);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("alterações", () => {
+  function respond(payload: unknown, status = 200) {
+    return vi.fn().mockImplementation(
+      () =>
+        new Response(JSON.stringify(payload), {
+          status,
+          headers: { "Content-Type": "application/json" },
+        }),
+    );
+  }
+
+  it("consulta o estado do chip", async () => {
+    const fetchMock = respond({
+      branch: "previewer/cap-1",
+      status: "draft",
+      change: null,
+      can_publish: false,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const state = await getChangeState("abc");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/abc/changes/state",
+      undefined,
+    );
+    expect(state.status).toBe("draft");
+    vi.unstubAllGlobals();
+  });
+
+  it("lista as alterações", async () => {
+    const fetchMock = respond({ changes: [] });
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await listChanges("abc")).toEqual([]);
+    vi.unstubAllGlobals();
+  });
+
+  it("sobe um rascunho com título e descrição", async () => {
+    const fetchMock = respond({ id: "c1", pr_number: 12, url: "u", created: true });
+    vi.stubGlobal("fetch", fetchMock);
+    await publishChange("abc", "c1", "Capítulo 1", "desc");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/abc/changes/c1/publish",
+      expect.objectContaining({ method: "POST" }),
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it("faz backup do rascunho", async () => {
+    const fetchMock = respond({ id: "c1" });
+    vi.stubGlobal("fetch", fetchMock);
+    await backupChange("abc", "c1");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/abc/changes/c1/backup",
+      expect.objectContaining({ method: "POST" }),
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it("retoma e descarta uma alteração", async () => {
+    const fetchMock = respond({ id: "c1" });
+    vi.stubGlobal("fetch", fetchMock);
+    await resumeChange("abc", "c1");
+    await discardChange("abc", "c1");
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/projects/abc/changes/c1/resume",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/projects/abc/changes/c1/discard",
+      expect.objectContaining({ method: "POST" }),
+    );
     vi.unstubAllGlobals();
   });
 });

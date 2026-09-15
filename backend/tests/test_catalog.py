@@ -44,3 +44,15 @@ def test_same_name_other_owner_allowed(repository):
 def test_owner_associated(repository):
     project = repository.create("alice", "p")
     assert project.owner_id == "alice"
+
+
+def test_create_stores_upstream_and_base_branch(repository):
+    project = repository.create(
+        "alice",
+        "p",
+        upstream="upstream/projeto",
+        base_branch="main",
+    )
+    fetched = repository.get(project.id)
+    assert fetched.upstream == "upstream/projeto"
+    assert fetched.base_branch == "main"

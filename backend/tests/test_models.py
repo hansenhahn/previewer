@@ -1,4 +1,4 @@
-from infra.models import Project, User, UserIdentity, UserRepository
+from infra.models import Change, Project, User, UserIdentity, UserRepository
 
 
 def test_project_columns():
@@ -8,6 +8,8 @@ def test_project_columns():
         "owner_id",
         "name",
         "encoding",
+        "upstream",
+        "base_branch",
         "created_at",
         "updated_at",
     } <= columns
@@ -41,3 +43,21 @@ def test_user_repository_columns_and_unique_constraint():
     } <= columns
     names = {constraint.name for constraint in UserRepository.__table__.constraints}
     assert "uq_user_repositories_user_provider_name" in names
+
+
+def test_change_columns_and_unique_constraint():
+    columns = set(Change.__table__.columns.keys())
+    assert {
+        "id",
+        "project_id",
+        "user_id",
+        "branch",
+        "title",
+        "base_commit",
+        "pr_number",
+        "status",
+        "created_at",
+        "updated_at",
+    } <= columns
+    names = {constraint.name for constraint in Change.__table__.constraints}
+    assert "uq_changes_project_user_branch" in names

@@ -7,7 +7,7 @@ from .identity import Authorization, Identity, IdentityError, RepositoryRef
 AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 TOKEN_URL = "https://github.com/login/oauth/access_token"
 API_ROOT = "https://api.github.com"
-SCOPES = "read:user user:email"
+SCOPES = "read:user user:email public_repo"
 
 
 def _secure_avatar(url) -> str | None:
@@ -80,6 +80,9 @@ class GitHubOAuthProvider:
                 break
             page += 1
         return repos
+
+    def get_repo(self, full_name: str, access_token: str) -> dict:
+        return self._api_get(f"/repos/{full_name}", access_token)
 
     def _access_token(self, code: str, redirect_uri: str) -> str:
         data = urllib.parse.urlencode(

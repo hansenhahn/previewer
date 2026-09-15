@@ -8,7 +8,6 @@ export interface AppState {
   documents: OpenDocument[];
   activePath?: string;
   currentScreen?: string;
-  showOriginal: boolean;
   auth?: AuthUser;
   authConfig?: AuthConfig;
 }
@@ -17,5 +16,4 @@ export const state: AppState = {
   projects: [],
   files: [],
   documents: [],
-  showOriginal: true,
 };
