@@ -16,6 +16,12 @@ def create_app(
     app = Flask(__name__)
     app.config.update(SECRET_KEY=settings.secret_key, SETTINGS=settings)
 
+    if settings.trust_proxy:
+        from werkzeug.middleware.proxy_fix import ProxyFix
+
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    app.config.update(SESSION_COOKIE_SECURE=settings.session_cookie_secure)
+
     if database is None:
         from infra.db import Database
 

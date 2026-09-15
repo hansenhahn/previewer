@@ -25,6 +25,12 @@ class Settings:
     github_client_id: str = ""
     github_client_secret: str = ""
     github_allowed_users: str = ""
+    trust_proxy: bool = False
+    session_cookie_secure: bool = False
+
+
+def _truthy(value: str | None) -> bool:
+    return (value or "").strip().lower() in ("1", "true", "yes", "on")
 
 
 def load_settings(environ=None) -> Settings:
@@ -42,4 +48,6 @@ def load_settings(environ=None) -> Settings:
         github_client_id=environ["GITHUB_CLIENT_ID"],
         github_client_secret=environ["GITHUB_CLIENT_SECRET"],
         github_allowed_users=environ["GITHUB_ALLOWED_USERS"],
+        trust_proxy=_truthy(environ.get("TRUST_PROXY")),
+        session_cookie_secure=_truthy(environ.get("SESSION_COOKIE_SECURE")),
     )
