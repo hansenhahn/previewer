@@ -2,7 +2,7 @@ import pytest
 
 from domain.errors import FontDecodeError
 from domain.fonts import load_font
-from tests.fixtures.fonts.synth import build_nftr
+from tests.fixtures.fonts.synth import build_nftr, build_nftr_multi_cmap
 
 EXPECTED_A_PIXELS = bytes(
     [
@@ -21,6 +21,13 @@ def test_reads_header_and_mapping():
     assert font.bpp == 1
     assert font.line_height == 8
     assert font.cmap == {0x41: 1}
+
+
+def test_reads_chained_cmap_segments():
+    # CMAP em dois segmentos encadeados (caso do KH 358/2 Days)
+    font = load_font(build_nftr_multi_cmap())
+    assert font.cmap[0x41] == 1
+    assert font.cmap[0xE1] == 1
 
 
 def test_decodes_glyph_bitmap_golden():
