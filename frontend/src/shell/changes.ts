@@ -245,6 +245,25 @@ export function createChanges(options: ChangesOptions): ChangesHandle {
     return element;
   }
 
+  function typedConfirm(
+    body: HTMLElement,
+    onChange: (ready: boolean) => void,
+  ): void {
+    const label = document.createElement("label");
+    label.textContent = "Digite “confirmar” para habilitar";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.autocomplete = "off";
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("autocorrect", "off");
+    input.spellcheck = false;
+    input.addEventListener("input", () => {
+      onChange(input.value.trim().toLowerCase() === "confirmar");
+    });
+    body.append(label, input);
+    onChange(false);
+  }
+
   function trashButton(label: string, onClick: () => void): HTMLButtonElement {
     const element = document.createElement("button");
     element.type = "button";
@@ -445,6 +464,10 @@ export function createChanges(options: ChangesOptions): ChangesHandle {
     const confirm = button("Descartar", "danger", () =>
       void runDiscard(change.id, close, confirm),
     );
+    confirm.disabled = true;
+    typedConfirm(body, (ready) => {
+      confirm.disabled = !ready;
+    });
     footer.append(button("Cancelar", "default", close), confirm);
   }
 
@@ -488,6 +511,10 @@ export function createChanges(options: ChangesOptions): ChangesHandle {
     const confirm = button("Abandonar", "danger", () =>
       void runAbandon(change.id, close, confirm, onDone),
     );
+    confirm.disabled = true;
+    typedConfirm(body, (ready) => {
+      confirm.disabled = !ready;
+    });
     footer.append(button("Cancelar", "default", close), confirm);
   }
 

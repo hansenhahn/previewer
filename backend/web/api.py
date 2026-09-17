@@ -332,6 +332,15 @@ def create_project():
     return jsonify(_project_dict(project)), 201
 
 
+@bp.delete("/projects/<project_id>")
+def delete_project(project_id):
+    project = _project(project_id)
+    _changes().delete_for_project(project.id)
+    _projects().delete(project.id)
+    _storage().delete_project(_owner(), str(project.id))
+    return "", 204
+
+
 def _repository_dict(repo) -> dict:
     return {
         "provider": repo.provider,

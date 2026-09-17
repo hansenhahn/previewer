@@ -67,3 +67,11 @@ def test_delete(repos):
     change = changes.create(project.id, user.id, "previewer/abc")
     changes.delete(change.id)
     assert changes.get(change.id) is None
+
+
+def test_delete_for_project(repos):
+    user, project, changes = repos
+    changes.create(project.id, user.id, "previewer/a")
+    changes.create(project.id, user.id, "previewer/b")
+    changes.delete_for_project(project.id)
+    assert changes.list_for_user(user.id, project.id) == []

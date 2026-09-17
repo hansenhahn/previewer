@@ -195,6 +195,25 @@ body {
   font-weight: 600;
 }
 
+.pv-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pv-menu-row .pv-menu-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pv-menu-row .pv-icon-btn {
+  width: auto;
+  flex: 0 0 auto;
+}
+
 .pv-menu .meta {
   margin-top: 4px;
   padding: 6px 8px;

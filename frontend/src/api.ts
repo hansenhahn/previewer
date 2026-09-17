@@ -225,6 +225,12 @@ export function importGithubProject(fullName: string): Promise<ProjectSummary> {
   });
 }
 
+export function deleteProject(projectId: string): Promise<void> {
+  return request<void>(apiUrl(`/projects/${encodeURIComponent(projectId)}`), {
+    method: "DELETE",
+  });
+}
+
 export function getAuthConfig(): Promise<AuthConfig> {
   return request<AuthConfig>("/auth/config");
 }

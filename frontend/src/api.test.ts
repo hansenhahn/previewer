@@ -4,6 +4,7 @@ import {
   apiUrl,
   atlasImageUrl,
   backupChange,
+  deleteProject,
   discardChange,
   fileUrl,
   getAuthConfig,
@@ -69,6 +70,19 @@ describe("autenticação", () => {
     const state = await getAuthMe();
     expect(fetchMock).toHaveBeenCalledWith("/auth/me", undefined);
     expect(state.authenticated).toBe(false);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("projetos", () => {
+  it("remove um projeto", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await deleteProject("a b");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/a%20b",
+      expect.objectContaining({ method: "DELETE" }),
+    );
     vi.unstubAllGlobals();
   });
 });
