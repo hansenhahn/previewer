@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from .models import Change, Project, User, UserIdentity
 from .models import UserRepository as UserRepositoryModel
@@ -166,6 +166,11 @@ class ChangeRepository:
             if change is not None:
                 session.delete(change)
                 session.commit()
+
+    def delete_for_project(self, project_id) -> None:
+        with self.session_factory() as session:
+            session.execute(delete(Change).where(Change.project_id == project_id))
+            session.commit()
 
     def list_for_user(self, user_id, project_id=None) -> list[Change]:
         with self.session_factory() as session:

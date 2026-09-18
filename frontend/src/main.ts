@@ -1,5 +1,6 @@
 import {
   backgroundUrl,
+  deleteProject,
   getAuthMe,
   getProject,
   listFiles,
@@ -7,6 +8,7 @@ import {
   readFile,
   saveFile,
   uploadProject,
+  type ProjectSummary,
 } from "./api";
 import { createAutosave, type SaveState } from "./autosave";
 import { loadAuthConfig, renderLogin } from "./auth";
@@ -684,15 +686,24 @@ function renderProjectSelector(): void {
 
   projectMenu.replaceChildren();
   for (const project of state.projects) {
+    const row = document.createElement("div");
+    row.className = "pv-menu-row";
     const item = document.createElement("button");
     item.type = "button";
+    item.className = "pv-menu-name";
     item.textContent = project.name;
     item.classList.toggle("active", project.id === state.project?.id);
     item.addEventListener("click", () => {
       projectMenu.hidden = true;
       location.hash = `#/projects/${project.id}`;
     });
-    projectMenu.append(item);
+    const remove = iconButton("trash", "Remover projeto", () => {
+      projectMenu.hidden = true;
+      openDeleteProject(project);
+    });
+    remove.classList.add("pv-icon-btn--danger");
+    row.append(item, remove);
+    projectMenu.append(row);
   }
   const importItem = document.createElement("button");
   importItem.type = "button";
@@ -741,6 +752,103 @@ function refreshFileList(): void {
 async function refreshProjects(): Promise<void> {
   state.projects = await listProjects();
   renderProjectSelector();
+}
+
+function resetProject(): void {
+  autosave.cancel();
+  state.project = undefined;
+  state.activePath = undefined;
+  state.documents = [];
+  state.files = [];
+  state.currentScreen = undefined;
+  changesHandle.setProject(undefined);
+  renderProjectSelector();
+  renderScreenSelector();
+  clearActiveDocument();
+  if (location.hash) {
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+}
+
+function openDeleteProject(project: ProjectSummary): void {
+  const overlay = document.createElement("div");
+  overlay.className = "pv-modal";
+  const dialog = document.createElement("div");
+  dialog.className = "pv-modal-dialog pv-dialog";
+  dialog.setAttribute("role", "dialog");
+  dialog.setAttribute("aria-modal", "true");
+  dialog.setAttribute("aria-label", "Remover projeto");
+
+  const head = document.createElement("div");
+  head.className = "pv-modal-head";
+  const heading = document.createElement("h2");
+  heading.textContent = "Remover projeto";
+  head.append(heading, iconButton("xmark", "Fechar", () => overlay.remove()));
+
+  const body = document.createElement("div");
+  body.className = "pv-dialog-body";
+  const message = document.createElement("p");
+  message.textContent = `Remover o projeto “${project.name}”? Isso apaga o registro, as alterações e o working copy. O repositório no GitHub não é afetado.`;
+  const label = document.createElement("label");
+  label.textContent = "Digite “confirmar” para habilitar";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.autocomplete = "off";
+  input.setAttribute("autocapitalize", "off");
+  input.setAttribute("autocorrect", "off");
+  input.spellcheck = false;
+  body.append(message, label, input);
+
+  const foot = document.createElement("div");
+  foot.className = "pv-modal-foot";
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "pv-btn pv-btn--plain";
+  cancel.textContent = "Cancelar";
+  cancel.addEventListener("click", () => overlay.remove());
+  const confirm = document.createElement("button");
+  confirm.type = "button";
+  confirm.className = "pv-btn pv-btn--danger";
+  confirm.textContent = "Remover";
+  confirm.disabled = true;
+  input.addEventListener("input", () => {
+    confirm.disabled = input.value.trim().toLowerCase() !== "confirmar";
+  });
+  confirm.addEventListener("click", () => void runDelete(project, confirm, overlay));
+  foot.append(cancel, confirm);
+
+  dialog.append(head, body, foot);
+  overlay.append(dialog);
+  overlay.addEventListener("mousedown", (event) => {
+    if (event.target === overlay) {
+      overlay.remove();
+    }
+  });
+  document.body.append(overlay);
+  input.focus();
+}
+
+async function runDelete(
+  project: ProjectSummary,
+  confirm: HTMLButtonElement,
+  overlay: HTMLElement,
+): Promise<void> {
+  confirm.disabled = true;
+  confirm.textContent = "Removendo…";
+  try {
+    await deleteProject(project.id);
+    overlay.remove();
+    const wasOpen = state.project?.id === project.id;
+    if (wasOpen) {
+      resetProject();
+    }
+    await refreshProjects();
+    kit.toast({ message: "Projeto removido", variant: "success" });
+  } catch (error) {
+    confirm.disabled = false;
+    confirm.textContent = "Remover";
+    showError(error instanceof Error ? error.message : String(error));
+  }
 }
 
 function renderScreenSelector(): void {
