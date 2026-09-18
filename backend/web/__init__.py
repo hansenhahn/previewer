@@ -12,6 +12,8 @@ def create_app(
     identity_provider=None,
     repositories=None,
     github_source=None,
+    changes=None,
+    project_export=None,
 ) -> Flask:
     app = Flask(__name__)
     app.config.update(SECRET_KEY=settings.secret_key, SETTINGS=settings)
@@ -53,6 +55,18 @@ def create_app(
 
         repositories = RepositoryStore(session_factory)
     app.extensions["repositories"] = repositories
+
+    if changes is None and session_factory is not None:
+        from infra.repository import ChangeRepository
+
+        changes = ChangeRepository(session_factory)
+    app.extensions["changes"] = changes
+
+    if project_export is None:
+        from infra.project_export import GitHubProjectExport
+
+        project_export = GitHubProjectExport()
+    app.extensions["project_export"] = project_export
 
     if identity_provider is None:
         from infra.github import GitHubOAuthProvider

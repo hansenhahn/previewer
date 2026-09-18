@@ -27,14 +27,14 @@ def opener(routes):
     return _open
 
 
-def test_login_url_requests_only_identity_scopes():
+def test_login_url_requests_identity_and_write_scopes():
     provider = GitHubOAuthProvider("id", "secret")
     url = provider.login_url("estado", "https://app.test/auth/callback")
     assert url.startswith("https://github.com/login/oauth/authorize?")
-    assert "scope=read%3Auser+user%3Aemail" in url
+    assert "scope=read%3Auser+user%3Aemail+public_repo" in url
     assert "state=estado" in url
     assert "redirect_uri=https%3A%2F%2Fapp.test%2Fauth%2Fcallback" in url
-    assert "repo" not in url
+    assert "scope=repo" not in url
 
 
 def test_exchange_reads_profile_and_primary_email():
@@ -80,6 +80,25 @@ def test_exchange_rejects_insecure_avatar():
     )
     authorization = provider.exchange("code", "https://app.test/auth/callback")
     assert authorization.identity.avatar_url is None
+
+
+def test_get_repo_reads_parent():
+    provider = GitHubOAuthProvider(
+        "id",
+        "secret",
+        opener=opener(
+            {
+                "/repos/alice/projeto": {
+                    "full_name": "alice/projeto",
+                    "fork": True,
+                    "default_branch": "main",
+                    "parent": {"full_name": "upstream/projeto", "default_branch": "main"},
+                }
+            }
+        ),
+    )
+    meta = provider.get_repo("alice/projeto", "tok")
+    assert meta["parent"]["full_name"] == "upstream/projeto"
 
 
 def test_list_repos_keeps_only_public():

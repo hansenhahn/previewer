@@ -8,8 +8,10 @@ import {
   saveFile,
   uploadProject,
 } from "./api";
+import { createAutosave, type SaveState } from "./autosave";
 import { loadAuthConfig, renderLogin } from "./auth";
 import { renderAccount } from "./shell/account";
+import { createChanges } from "./shell/changes";
 import {
   addDocument,
   closeDocument,
@@ -62,6 +64,7 @@ const navScrim = element<HTMLElement>("nav-scrim");
 const mobileBar = element<HTMLElement>("mobile-editor-bar");
 const loginView = element<HTMLElement>("login-view");
 const accountSlot = element<HTMLElement>("account-slot");
+const changesSlot = element<HTMLElement>("changes-slot");
 const sidebar = element<HTMLElement>("docs-sidebar");
 const sidebarResizer = element<HTMLElement>("sidebar-resizer");
 const previewPane = element<HTMLElement>("preview-pane");
@@ -172,7 +175,7 @@ previewResizer.addEventListener("dblclick", () => {
 });
 const projectSlot = element<HTMLDivElement>("project-slot");
 const viewSlot = element<HTMLDivElement>("view-slot");
-const textActionsSlot = element<HTMLDivElement>("text-actions-slot");
+const saveSlot = element<HTMLDivElement>("save-slot");
 const navSlot = element<HTMLDivElement>("nav-slot");
 const themeSlot = element<HTMLDivElement>("theme-slot");
 const screenSlot = element<HTMLDivElement>("screen-slot");
@@ -425,26 +428,113 @@ editorButton.addEventListener("click", () => setView("editor"));
 
 viewSlot.append(segmentsButton, editorButton);
 
+const saveIndicator = document.createElement("span");
+saveIndicator.className = "pv-save";
+saveIndicator.hidden = true;
+
 const saveButton = document.createElement("button");
 saveButton.type = "button";
-saveButton.className = "pv-btn pv-btn--primary";
+saveButton.className = "pv-head-btn";
 saveButton.textContent = "Salvar";
 saveButton.addEventListener("click", () => {
-  void guard(saveCurrent);
+  if (saveButton.disabled) {
+    return;
+  }
+  void guard(async () => {
+    saveButton.disabled = true;
+    saveButton.textContent = "Salvando…";
+    try {
+      await autosave.flush();
+      await changesHandle.backup();
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = "Salvar";
+    }
+  });
 });
 
-const originalButton = document.createElement("button");
-originalButton.type = "button";
-originalButton.className = "pv-btn";
-originalButton.textContent = "Original";
-originalButton.addEventListener("click", toggleOriginal);
+saveSlot.append(saveIndicator, saveButton);
 
-const dirtyIndicator = document.createElement("span");
-dirtyIndicator.className = "pv-dirty";
-dirtyIndicator.hidden = true;
-dirtyIndicator.title = "não salvo";
+let savedFlash: ReturnType<typeof setTimeout> | undefined;
 
-textActionsSlot.append(saveButton, originalButton, dirtyIndicator);
+function renderSaveState(value: SaveState): void {
+  if (savedFlash !== undefined) {
+    clearTimeout(savedFlash);
+    savedFlash = undefined;
+  }
+  saveIndicator.className = `pv-save pv-save--${value}`;
+  saveIndicator.replaceChildren();
+  if (value === "idle") {
+    saveIndicator.hidden = true;
+    return;
+  }
+  if (value === "saved") {
+    saveIndicator.textContent = "✓";
+    saveIndicator.hidden = false;
+    savedFlash = setTimeout(() => {
+      savedFlash = undefined;
+      saveIndicator.hidden = true;
+    }, 1500);
+    return;
+  }
+  if (value === "offline") {
+    saveIndicator.append(kit.icon("ban", "Erro ao salvar"));
+    saveIndicator.hidden = false;
+    return;
+  }
+  saveIndicator.hidden = true;
+}
+
+let suppressSave = false;
+
+const autosave = createAutosave({
+  save: () => persistActiveDocument(),
+  onState: renderSaveState,
+});
+
+const busyOverlay = document.createElement("div");
+busyOverlay.className = "pv-busy";
+busyOverlay.hidden = true;
+const busyBox = document.createElement("div");
+busyBox.className = "pv-busy-box";
+const busySpinner = document.createElement("div");
+busySpinner.className = "pv-busy-spinner";
+const busyLabel = document.createElement("span");
+busyLabel.textContent = "Carregando…";
+busyBox.append(busySpinner, busyLabel);
+busyOverlay.append(busyBox);
+document.body.append(busyOverlay);
+
+let busyCount = 0;
+let busyTimer: number | undefined;
+
+function setBusy(busy: boolean, label = "Carregando…"): void {
+  if (busy) {
+    busyCount += 1;
+    busyLabel.textContent = label;
+    if (busyCount === 1) {
+      busyTimer = window.setTimeout(() => {
+        busyTimer = undefined;
+        busyOverlay.hidden = false;
+      }, 150);
+    }
+  } else {
+    busyCount = Math.max(0, busyCount - 1);
+    if (busyCount === 0) {
+      if (busyTimer !== undefined) {
+        window.clearTimeout(busyTimer);
+        busyTimer = undefined;
+      }
+      busyOverlay.hidden = true;
+    }
+  }
+}
+
+const changesHandle = createChanges({
+  onReload: () => reloadWorkspace(),
+  onBusy: (busy, label) => setBusy(busy, label),
+});
+changesSlot.append(changesHandle.element);
 
 navSlot.append(
   iconButton("chevron-up", "Segmento anterior", () => cat.move(-1)),
@@ -498,9 +588,12 @@ function schedulePreview(cursorLine = 0): void {
 async function guard(action: () => Promise<void>): Promise<void> {
   try {
     showError(undefined);
+    setBusy(true);
     await action();
   } catch (error) {
     showError(error instanceof Error ? error.message : String(error));
+  } finally {
+    setBusy(false);
   }
 }
 
@@ -532,7 +625,7 @@ function setView(next: ViewMode): void {
   const catMode = next === "cat";
   editorHost.hidden = catMode;
   catHost.hidden = !catMode;
-  originalPane.hidden = catMode || !state.showOriginal;
+  originalPane.hidden = catMode;
   updateViewButtons();
   if (catMode) {
     loadCat(activeDoc());
@@ -554,6 +647,7 @@ function onEditorChange(): void {
   updateModifiedIndicator();
   refreshTabs();
   schedulePreview();
+  autosave.schedule();
 }
 
 function onCatChange(text: string): void {
@@ -565,6 +659,7 @@ function onCatChange(text: string): void {
   updateModifiedIndicator();
   refreshTabs();
   schedulePreview(cat.activeStartLine() ?? 0);
+  autosave.schedule();
 }
 
 function onCatSelect(startLine: number): void {
@@ -573,7 +668,9 @@ function onCatSelect(startLine: number): void {
 
 function updateModifiedIndicator(): void {
   const doc = activeDoc();
-  dirtyIndicator.hidden = !doc?.modified;
+  if (!doc?.modified) {
+    renderSaveState("idle");
+  }
 }
 
 function renderProjectSelector(): void {
@@ -628,7 +725,7 @@ function refreshTabs(): void {
     state.documents,
     state.activePath,
     (path) => void guard(() => activateDocument(path)),
-    (path) => closeDocumentTab(path),
+    (path) => void closeDocumentTab(path),
   );
 }
 
@@ -648,6 +745,7 @@ async function refreshProjects(): Promise<void> {
 
 function renderScreenSelector(): void {
   screenButton.replaceChildren();
+  screenButton.className = "pv-head-btn";
   const icon = kit.icon("table-cells-large", "telas");
   icon.classList.add("pv-screen-btn-icon");
   const label = document.createElement("span");
@@ -725,6 +823,12 @@ function closeScreenModal(): void {
 }
 
 async function activateDocument(path: string): Promise<void> {
+  if (!suppressSave && state.activePath && state.activePath !== path) {
+    const previous = findDocument(state.documents, state.activePath);
+    if (previous?.modified) {
+      await autosave.flush();
+    }
+  }
   if (state.activePath && state.activePath !== path) {
     state.documents = updateContent(state.documents, state.activePath, editor.getText());
   }
@@ -777,7 +881,13 @@ function clearActiveDocument(): void {
   refreshFileList();
 }
 
-function closeDocumentTab(path: string): void {
+async function closeDocumentTab(path: string): Promise<void> {
+  if (!suppressSave && state.activePath === path) {
+    const doc = findDocument(state.documents, path);
+    if (doc?.modified) {
+      await autosave.flush();
+    }
+  }
   const next = pathAfterClose(state.documents, path);
   state.documents = closeDocument(state.documents, path);
   if (state.activePath !== path) {
@@ -816,11 +926,18 @@ async function configureScreen(screenName: string): Promise<void> {
 }
 
 async function openProject(projectId: string): Promise<void> {
+  if (state.project && !suppressSave) {
+    const doc = activeDoc();
+    if (doc?.modified) {
+      await autosave.flush();
+    }
+  }
   state.project = await getProject(projectId);
   state.activePath = undefined;
   state.documents = [];
   renderProjectSelector();
   renderScreenSelector();
+  changesHandle.setProject(projectId);
   await loadFiles(projectId);
   clearActiveDocument();
   const firstScreen = state.project.manifest.screens[0];
@@ -831,24 +948,55 @@ async function openProject(projectId: string): Promise<void> {
     await openDocument(state.files[0]);
   }
   setView(state.project.manifest.segments ? "cat" : "editor");
+  await changesHandle.refresh();
 }
 
-async function saveCurrent(): Promise<void> {
-  const doc = activeDoc();
-  if (!state.project || !doc) {
+async function persistActiveDocument(): Promise<void> {
+  if (suppressSave) {
     return;
   }
-  await saveFile(state.project.id, doc.path, editor.getText());
-  state.documents = markSaved(state.documents, doc.path, editor.getText());
+  const doc = activeDoc();
+  if (!state.project || !doc || !doc.modified) {
+    return;
+  }
+  const text = editor.getText();
+  await saveFile(state.project.id, doc.path, text);
+  state.documents = markSaved(state.documents, doc.path, text);
   updateModifiedIndicator();
   refreshTabs();
-  kit.toast({ message: "Arquivo salvo", variant: "success" });
+  await changesHandle.refresh();
 }
 
-function toggleOriginal(): void {
-  state.showOriginal = !state.showOriginal;
-  originalPane.hidden = view === "cat" || !state.showOriginal;
-  originalButton.classList.toggle("active", state.showOriginal);
+async function reloadWorkspace(): Promise<void> {
+  if (!state.project) {
+    return;
+  }
+  const projectId = state.project.id;
+  suppressSave = true;
+  try {
+    state.project = await getProject(projectId);
+    renderProjectSelector();
+    renderScreenSelector();
+    const screen =
+      state.project.manifest.screens.find(
+        (item) => item.name === state.currentScreen,
+      ) ?? state.project.manifest.screens[0];
+    if (screen) {
+      await configureScreen(screen.name);
+    }
+    await loadFiles(projectId);
+    const path = state.activePath;
+    if (path && state.files.includes(path)) {
+      state.documents = closeDocument(state.documents, path);
+      await openDocument(path);
+    } else if (state.files.length > 0) {
+      await openDocument(state.files[0]);
+    } else {
+      clearActiveDocument();
+    }
+  } finally {
+    suppressSave = false;
+  }
 }
 
 function applyTheme(): void {
@@ -871,6 +1019,10 @@ upload.addEventListener("change", () => {
   upload.value = "";
 });
 
+window.addEventListener("pagehide", () => {
+  void changesHandle.backup(true);
+});
+
 window.addEventListener("hashchange", () => {
   const match = /^#\/projects\/(.+)$/.exec(location.hash);
   if (match) {
@@ -879,13 +1031,12 @@ window.addEventListener("hashchange", () => {
 });
 
 // --- Inicialização ----------------------------------------------------------
-originalButton.classList.toggle("active", state.showOriginal);
 applyTheme();
 renderProjectSelector();
 renderScreenSelector();
+renderSaveState("idle");
 setView("editor");
 applyMobileLayout();
-originalPane.hidden = !state.showOriginal;
 fitPreview();
 
 const AUTH_MESSAGES: Record<string, string> = {
