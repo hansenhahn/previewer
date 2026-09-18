@@ -115,6 +115,30 @@
         "overflow_horizontal": false,
         "overflow_vertical": false
       }
+    },
+    {
+      "name": "linha_apagada_nao_avanca",
+      "matches": [],
+      "tags": ["<t>"],
+      "cursor_line": 0,
+      "text": "<t>\nA",
+      "expected": {
+        "glyphs": [{ "codepoint": 65, "x": 8, "y": 16 }],
+        "overflow_horizontal": false,
+        "overflow_vertical": false
+      }
+    },
+    {
+      "name": "limite_casa_na_linha_crua",
+      "matches": ["^#"],
+      "tags": ["^#.*"],
+      "cursor_line": 0,
+      "text": "A\n#\nB",
+      "expected": {
+        "glyphs": [{ "codepoint": 65, "x": 8, "y": 16 }],
+        "overflow_horizontal": false,
+        "overflow_vertical": false
+      }
     }
   ]
 }

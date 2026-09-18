@@ -54,9 +54,16 @@ export function computeLayout(
       break;
     }
 
-    const stripped = stripTags(lines[lineIndex], tags);
-    if (matches.length > 0 && matchesAtStart(stripped, matches)) {
+    // Limites (matches) sao estruturais: casam na linha crua, mesmo que as tags
+    // as apaguem para exibicao.
+    if (matches.length > 0 && matchesAtStart(lines[lineIndex], matches)) {
       break;
+    }
+
+    const stripped = stripTags(lines[lineIndex], tags);
+    if (stripped.length === 0) {
+      // linha sem glifos (delimitador/slot vazio): nao ocupa espaco vertical
+      continue;
     }
 
     let x = screen.x;

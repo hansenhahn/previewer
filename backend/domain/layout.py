@@ -62,9 +62,15 @@ def layout(text: str, font: Font, config: ScreenConfig, cursor_line: int = 0) ->
             overflow_vertical = True
             break
 
-        stripped = _strip_tags(line, config.tags)
-        if config.matches and any(re.match(pattern, stripped) for pattern in config.matches):
+        # Limites (matches) sao estruturais: casam na linha crua, mesmo que as
+        # tags as apaguem para exibicao.
+        if config.matches and any(re.match(pattern, line) for pattern in config.matches):
             break
+
+        stripped = _strip_tags(line, config.tags)
+        if not stripped:
+            # linha sem glifos (delimitador/slot vazio): nao ocupa espaco vertical
+            continue
 
         x = config.x_pos
         for char in stripped:

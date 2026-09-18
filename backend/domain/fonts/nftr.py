@@ -161,33 +161,52 @@ class NftrFont:
 
     def _read_cmap(self, offset: int):
         data = self._source
-        start = offset - _BLOCK_HEADER_SIZE
-        if start < 0 or _tag(data, start) != _CMAP_MAGIC:
-            raise FontDecodeError("bloco CMAP ausente")
-        first = _u16(data, offset)
-        last = _u16(data, offset + 2)
-        mapping_type = _u16(data, offset + 4)
-        mapping = offset + _CMAP_HEADER_SIZE
-
         cmap = {}
-        if mapping_type == 0:
-            first_index = _u16(data, mapping)
-            for i in range(last - first + 1):
-                cmap[first + i] = first_index + i
-        elif mapping_type == 1:
-            for i in range(last - first + 1):
-                index = _u16(data, mapping + i * 2)
-                if index != _UNMAPPED:
-                    cmap[first + i] = index
-        elif mapping_type == 2:
-            entries = _u16(data, mapping)
-            base = mapping + 2
-            for i in range(entries):
-                codepoint = _u16(data, base + i * 4)
-                index = _u16(data, base + i * 4 + 2)
-                cmap[codepoint] = index
-        else:
-            raise FontDecodeError("tipo de CMAP desconhecido")
+        visited = set()
+        # O CMAP pode ser uma cadeia de segmentos: os 4 bytes em offset+8
+        # apontam para o proximo segmento (0 = fim). Fontes com um unico
+        # segmento (ex.: playton-3) tem next=0 e caem no caso trivial.
+        while offset:
+            if offset in visited:
+                break
+            visited.add(offset)
+            start = offset - _BLOCK_HEADER_SIZE
+            if start < 0 or _tag(data, start) != _CMAP_MAGIC:
+                raise FontDecodeError("bloco CMAP ausente")
+            first = _u16(data, offset)
+            last = _u16(data, offset + 2)
+            mapping_type = _u16(data, offset + 4)
+            next_offset = _u32(data, offset + 8)
+            mapping = offset + _CMAP_HEADER_SIZE
+            count = last - first + 1
+            if count < 0:
+                raise FontDecodeError("faixa de CMAP invalida")
+
+            if mapping_type == 0:
+                first_index = _u16(data, mapping)
+                for i in range(count):
+                    cmap[first + i] = first_index + i
+            elif mapping_type == 1:
+                if mapping + count * 2 > len(data):
+                    raise FontDecodeError("tabela CMAP truncada")
+                for i in range(count):
+                    index = _u16(data, mapping + i * 2)
+                    if index != _UNMAPPED:
+                        cmap[first + i] = index
+            elif mapping_type == 2:
+                entries = _u16(data, mapping)
+                base = mapping + 2
+                if base + entries * 4 > len(data):
+                    raise FontDecodeError("tabela CMAP truncada")
+                for i in range(entries):
+                    codepoint = _u16(data, base + i * 4)
+                    index = _u16(data, base + i * 4 + 2)
+                    if index != _UNMAPPED:
+                        cmap[codepoint] = index
+            else:
+                raise FontDecodeError("tipo de CMAP desconhecido")
+
+            offset = next_offset
         return cmap
 
     def _blank_glyph(self) -> Glyph:
