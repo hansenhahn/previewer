@@ -8,6 +8,7 @@
   <body>
     <div id="app" hidden>
       <header id="app-bar" class="pv-bar">
+        <div id="menu-slot" class="pv-actions"></div>
         <span class="pv-brand">previewer</span>
         <div id="project-slot" class="pv-project"></div>
         <div id="view-slot" class="pv-seg-group"></div>
@@ -20,6 +21,7 @@
         <input id="upload" type="file" accept=".zip" hidden>
       </header>
       <div id="error-slot" class="pv-errorbar" hidden></div>
+      <div id="nav-scrim" hidden></div>
       <div id="workspace">
         <div class="workspace-docs">
           <div id="tabs" class="pv-tabs"></div>
@@ -36,7 +38,7 @@
               aria-label="Redimensionar painel de arquivos"
             ></div>
             <div class="panes">
-              <section class="pane">
+              <section class="pane" id="content-pane">
                 <div id="editor" class="editor-host"></div>
                 <div id="cat-host" class="cat-host" hidden></div>
               </section>
@@ -62,6 +64,11 @@
                   </div>
                 </div>
               </section>
+              <div id="mobile-editor-bar" class="pv-mobile-bar" hidden>
+                <button type="button" data-action="prev" aria-label="Segmento anterior">«</button>
+                <button type="button" data-action="list" class="pv-mobile-list">☰ Lista</button>
+                <button type="button" data-action="next" aria-label="Próximo segmento">»</button>
+              </div>
             </div>
           </div>
         </div>

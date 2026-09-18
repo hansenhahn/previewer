@@ -1023,3 +1023,124 @@ body {
 *::-webkit-scrollbar-thumb:hover {
   background-color: var(--pv-color-scroll-thumb-hover);
 }
+
+/* --- Modo mobile --------------------------------------------------------- */
+#menu-slot {
+  display: none;
+}
+
+.pv-mobile-bar {
+  display: none;
+}
+
+#nav-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.pv-cat-readonly {
+  white-space: pre-wrap;
+}
+
+html.pv-mobile #menu-slot {
+  display: flex;
+}
+
+html.pv-mobile #view-slot,
+html.pv-mobile .pv-sep,
+html.pv-mobile #nav-slot,
+html.pv-mobile #theme-slot,
+html.pv-mobile #tabs,
+html.pv-mobile #original-pane,
+html.pv-mobile #sidebar-resizer,
+html.pv-mobile #preview-resizer {
+  display: none;
+}
+
+html.pv-mobile #docs-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 78%;
+  max-width: 320px;
+  z-index: 40;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.25);
+}
+
+html.pv-mobile.nav-open #docs-sidebar {
+  transform: none;
+}
+
+html.pv-mobile #docs-sidebar .pv-project {
+  display: block;
+  margin-bottom: var(--pv-space-s);
+}
+
+html.pv-mobile #docs-sidebar .pv-project .pv-btn {
+  width: 100%;
+  justify-content: space-between;
+}
+
+html.pv-mobile .panes {
+  flex-direction: column;
+}
+
+html.pv-mobile #preview-pane {
+  order: 0;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  border-left: 0;
+  border-bottom: 1px solid var(--pv-color-border);
+}
+
+html.pv-mobile #preview-pane .preview-body {
+  height: 216px;
+}
+
+html.pv-mobile #content-pane {
+  order: 2;
+  flex: 1;
+  min-height: 0;
+}
+
+.pv-mobile-bar {
+  align-items: center;
+  gap: var(--pv-space-s);
+  padding: 8px var(--pv-space-m);
+  background: var(--pv-color-surface);
+  border-bottom: 1px solid var(--pv-color-border);
+}
+
+.pv-mobile-bar button {
+  flex: 0 0 auto;
+  min-width: 54px;
+  padding: 9px 12px;
+  border: 1px solid var(--pv-color-border);
+  border-radius: var(--pv-radius-m);
+  background: var(--pv-color-surface);
+  color: var(--pv-color-text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pv-mobile-bar .pv-mobile-list {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pv-color-brand);
+  background: color-mix(in srgb, var(--pv-color-brand) 8%, var(--pv-color-surface));
+}
+
+html.pv-mobile .pv-mobile-bar:not([hidden]) {
+  order: 1;
+  display: flex;
+}

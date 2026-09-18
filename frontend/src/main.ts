@@ -56,6 +56,10 @@ function iconButton(name: string, label: string, onClick: () => void): HTMLButto
 
 const fileList = element<HTMLElement>("file-list");
 const appRoot = element<HTMLElement>("app");
+const appBar = element<HTMLElement>("app-bar");
+const menuSlot = element<HTMLElement>("menu-slot");
+const navScrim = element<HTMLElement>("nav-scrim");
+const mobileBar = element<HTMLElement>("mobile-editor-bar");
 const loginView = element<HTMLElement>("login-view");
 const accountSlot = element<HTMLElement>("account-slot");
 const sidebar = element<HTMLElement>("docs-sidebar");
@@ -227,10 +231,79 @@ if (storedPreview > 0) {
 
 const editor = createEditor(editorHost, () => onEditorChange());
 const originalEditor = createReadOnlyEditor(element<HTMLDivElement>("original"));
-const cat = createCat({ onTranslatedChange: onCatChange, onSelect: onCatSelect });
+const cat = createCat({
+  onTranslatedChange: onCatChange,
+  onSelect: onCatSelect,
+  onOpen: (index) => {
+    focusMobileSegment(index);
+  },
+});
 catHost.append(cat.element);
 
+const mobileQuery = window.matchMedia("(max-width: 640px)");
+
+const menuButton = document.createElement("button");
+menuButton.type = "button";
+menuButton.className = "pv-icon-btn";
+menuButton.title = "Menu";
+menuButton.setAttribute("aria-label", "Menu");
+menuButton.append(kit.icon("bars", "Menu"));
+menuButton.addEventListener("click", () => {
+  setNav(!document.documentElement.classList.contains("nav-open"));
+});
+menuSlot.append(menuButton);
+
+function setNav(open: boolean): void {
+  document.documentElement.classList.toggle("nav-open", open);
+  navScrim.hidden = !open;
+}
+
+navScrim.addEventListener("click", () => setNav(false));
+
+function focusMobileSegment(index: number): void {
+  if (cat.count() === 0) {
+    return;
+  }
+  const clamped = Math.max(0, Math.min(cat.count() - 1, index));
+  cat.focus(clamped);
+  mobileBar.hidden = false;
+}
+
+function applyMobileLayout(): void {
+  const mobile = mobileQuery.matches;
+  document.documentElement.classList.toggle("pv-mobile", mobile);
+  if (mobile) {
+    if (projectSlot.parentElement !== sidebar) {
+      sidebar.prepend(projectSlot);
+    }
+  } else if (projectSlot.parentElement !== appBar) {
+    appBar.insertBefore(projectSlot, viewSlot);
+  }
+  setNav(false);
+  if (mobile) {
+    setView("cat");
+    mobileBar.hidden = true;
+  }
+}
+
+function setupMobileBar(): void {
+  mobileBar.querySelector('[data-action="prev"]')?.addEventListener("click", () => {
+    focusMobileSegment(cat.activeIndex() - 1);
+  });
+  mobileBar.querySelector('[data-action="next"]')?.addEventListener("click", () => {
+    focusMobileSegment(cat.activeIndex() + 1);
+  });
+  mobileBar.querySelector('[data-action="list"]')?.addEventListener("click", () => {
+    cat.showList();
+    mobileBar.hidden = true;
+  });
+}
+
+setupMobileBar();
+mobileQuery.addEventListener("change", applyMobileLayout);
+
 let previewFrame: number | undefined;
+let previewCursor = 0;
 let view: ViewMode = "editor";
 
 const errorCallout = kit.callout("", "danger");
@@ -411,13 +484,14 @@ function showError(message?: string): void {
   }
 }
 
-function schedulePreview(): void {
+function schedulePreview(cursorLine = 0): void {
+  previewCursor = cursorLine;
   if (previewFrame !== undefined) {
     return;
   }
   previewFrame = window.requestAnimationFrame(() => {
     previewFrame = undefined;
-    preview.render(editor.getText());
+    preview.render(editor.getText(), previewCursor);
   });
 }
 
@@ -436,6 +510,8 @@ function activeDoc(): OpenDocument | undefined {
 
 function loadCat(doc: OpenDocument | undefined, fallbackContent = ""): void {
   const segments = state.project?.manifest.segments;
+  cat.setBrowse(mobileQuery.matches);
+  mobileBar.hidden = true;
   cat.load(
     doc?.content ?? fallbackContent,
     doc?.original ?? null,
@@ -488,7 +564,7 @@ function onCatChange(text: string): void {
   editor.setText(text);
   updateModifiedIndicator();
   refreshTabs();
-  schedulePreview();
+  schedulePreview(cat.activeStartLine() ?? 0);
 }
 
 function onCatSelect(startLine: number): void {
@@ -808,6 +884,7 @@ applyTheme();
 renderProjectSelector();
 renderScreenSelector();
 setView("editor");
+applyMobileLayout();
 originalPane.hidden = !state.showOriginal;
 fitPreview();
 

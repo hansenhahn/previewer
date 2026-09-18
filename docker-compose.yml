@@ -13,6 +13,16 @@ services:
     volumes:
       - storedata:/data
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    env_file: .env
+    command: ${NGROK_CMD:-http app:8000 --log stdout}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - app
+
   db:
     image: postgres:16
     environment:
