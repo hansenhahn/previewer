@@ -7,7 +7,7 @@ from .identity import Authorization, Identity, IdentityError, RepositoryRef
 AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 TOKEN_URL = "https://github.com/login/oauth/access_token"
 API_ROOT = "https://api.github.com"
-SCOPES = "read:user user:email public_repo"
+SCOPES = "read:user user:email repo"
 
 
 def _secure_avatar(url) -> str | None:
@@ -65,15 +65,13 @@ class GitHubOAuthProvider:
             if not batch:
                 break
             for repo in batch:
-                if repo.get("private"):
-                    continue
                 repos.append(
                     RepositoryRef(
                         provider=self.name,
                         full_name=repo["full_name"],
                         default_branch=repo.get("default_branch") or "main",
                         fork=bool(repo.get("fork")),
-                        private=False,
+                        private=bool(repo.get("private")),
                     )
                 )
             if len(batch) < 100:

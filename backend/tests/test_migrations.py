@@ -72,6 +72,17 @@ def test_upgrade_adds_project_upstream_columns(tmp_path, monkeypatch):
     assert {"upstream", "base_branch"} <= columns
 
 
+def test_upgrade_adds_repository_private_column(tmp_path, monkeypatch):
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    db_path = tmp_path / "private.sqlite"
+    command.upgrade(_config(db_path), "head")
+    engine = create_engine(f"sqlite+pysqlite:///{db_path}")
+    columns = {
+        column["name"] for column in inspect(engine).get_columns("user_repositories")
+    }
+    assert "private" in columns
+
+
 def test_upgrade_adds_token_and_manifest_columns(tmp_path, monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     db_path = tmp_path / "token.sqlite"

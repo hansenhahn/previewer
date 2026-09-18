@@ -347,6 +347,7 @@ def _repository_dict(repo) -> dict:
         "full_name": repo.full_name,
         "default_branch": repo.default_branch,
         "fork": repo.fork,
+        "private": repo.private,
         "manifest_ok": repo.manifest_ok,
         "manifest_error": repo.manifest_error,
     }
@@ -416,6 +417,7 @@ def import_github_project():
         default_branch=record.default_branch,
         upstream=upstream,
         base_branch=base_branch,
+        token=_token(),
     )
     return jsonify(_project_dict(project)), 201
 

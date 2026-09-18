@@ -37,6 +37,7 @@ def test_user_repository_columns_and_unique_constraint():
         "full_name",
         "default_branch",
         "fork",
+        "private",
         "manifest_ok",
         "manifest_error",
         "checked_at",

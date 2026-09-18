@@ -203,6 +203,7 @@ class RepositoryStore:
                     session.add(row)
                 row.default_branch = repo.default_branch
                 row.fork = repo.fork
+                row.private = repo.private
             for full_name, row in existing.items():
                 if full_name not in seen:
                     session.delete(row)

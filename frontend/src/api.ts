@@ -196,6 +196,7 @@ export interface GithubRepo {
   full_name: string;
   default_branch: string;
   fork: boolean;
+  private: boolean;
   manifest_ok: boolean | null;
   manifest_error: string | null;
 }
