@@ -137,6 +137,7 @@ class UserRepository(Base):
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     default_branch: Mapped[str] = mapped_column(String(255), nullable=False)
     fork: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    private: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     manifest_ok: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     manifest_error: Mapped[str | None] = mapped_column(String(255), nullable=True)
     checked_at: Mapped[datetime | None] = mapped_column(

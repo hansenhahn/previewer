@@ -5,7 +5,7 @@ import urllib.error
 import pytest
 
 from domain.project import parse_manifest
-from infra.github_source import GitHubSource, check_manifest
+from infra.github_source import GitHubSource, GitHubSourceError, check_manifest
 from infra.ingestion import InvalidBundleError
 
 
@@ -133,3 +133,39 @@ def test_check_manifest_invalid():
     )
     assert ok is False
     assert error
+
+
+def test_check_manifest_authenticated_uses_contents_api():
+    seen = {}
+
+    def opener(request):
+        seen["url"] = request.full_url
+        seen["auth"] = request.headers.get("Authorization")
+        return FakeResponse(_manifest())
+
+    ok, error = check_manifest("alice/projeto", "main", token="tok", opener=opener)
+    assert ok is True
+    assert error is None
+    assert "/repos/alice/projeto/contents/manifest.json" in seen["url"]
+    assert "ref=main" in seen["url"]
+    assert seen["auth"] == "Bearer tok"
+
+
+def test_run_sanitizes_token(monkeypatch):
+    import infra.github_source as github_source
+
+    class Result:
+        returncode = 1
+        stdout = b""
+        stderr = (
+            b"fatal: unable to access "
+            b"'https://x-access-token:tok@github.com/a/b.git/': 403"
+        )
+
+    monkeypatch.setattr(github_source.subprocess, "run", lambda *a, **k: Result())
+    source = GitHubSource()
+    source._secrets = ("tok",)
+    with pytest.raises(GitHubSourceError) as excinfo:
+        source._run(["fetch"])
+    assert "tok" not in str(excinfo.value)
+    assert "***" in str(excinfo.value)

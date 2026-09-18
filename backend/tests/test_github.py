@@ -31,10 +31,10 @@ def test_login_url_requests_identity_and_write_scopes():
     provider = GitHubOAuthProvider("id", "secret")
     url = provider.login_url("estado", "https://app.test/auth/callback")
     assert url.startswith("https://github.com/login/oauth/authorize?")
-    assert "scope=read%3Auser+user%3Aemail+public_repo" in url
+    assert "scope=read%3Auser+user%3Aemail+repo" in url
     assert "state=estado" in url
     assert "redirect_uri=https%3A%2F%2Fapp.test%2Fauth%2Fcallback" in url
-    assert "scope=repo" not in url
+    assert "scope=public_repo" not in url
 
 
 def test_exchange_reads_profile_and_primary_email():
@@ -101,7 +101,7 @@ def test_get_repo_reads_parent():
     assert meta["parent"]["full_name"] == "upstream/projeto"
 
 
-def test_list_repos_keeps_only_public():
+def test_list_repos_includes_private():
     provider = GitHubOAuthProvider(
         "id",
         "secret",
@@ -133,7 +133,9 @@ def test_list_repos_keeps_only_public():
     repos = provider.list_repos("tok")
     assert [repo.full_name for repo in repos] == [
         "alice/projeto",
+        "alice/segredo",
         "alice/fork-do-projeto",
     ]
     assert repos[0].default_branch == "main"
-    assert repos[1].fork is True
+    assert repos[1].private is True
+    assert repos[2].fork is True

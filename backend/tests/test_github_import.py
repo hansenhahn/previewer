@@ -32,7 +32,7 @@ class FakeSource:
             }
         ).encode("utf-8")
 
-    def fetch(self, *, full_name, default_branch, working_copy):
+    def fetch(self, *, full_name, default_branch, working_copy, token=None):
         self.calls.append((full_name, default_branch))
         working_copy.mkdir(parents=True, exist_ok=True)
         (working_copy / "manifest.json").write_bytes(self.manifest_bytes())
@@ -71,6 +71,13 @@ def app_client(tmp_path):
                 default_branch="main",
                 fork=True,
             ),
+            RepositoryRef(
+                provider="github",
+                full_name="alice/privado",
+                default_branch="main",
+                fork=False,
+                private=True,
+            ),
         ],
     )
     repositories.record_checks(
@@ -79,6 +86,7 @@ def app_client(tmp_path):
         {
             "alice/projeto": (True, None),
             "alice/fork-do-projeto": (False, "manifest.json ausente"),
+            "alice/privado": (True, None),
         },
     )
     settings = Settings(
@@ -114,10 +122,12 @@ def app_client(tmp_path):
 def test_list_repos_returns_cached(app_client):
     body = app_client.get("/api/github/repos").get_json()
     names = [repo["full_name"] for repo in body["repositories"]]
-    assert names == ["alice/fork-do-projeto", "alice/projeto"]
+    assert names == ["alice/fork-do-projeto", "alice/privado", "alice/projeto"]
     assert body["repositories"][0]["fork"] is True
     by_name = {repo["full_name"]: repo for repo in body["repositories"]}
     assert by_name["alice/projeto"]["manifest_ok"] is True
+    assert by_name["alice/projeto"]["private"] is False
+    assert by_name["alice/privado"]["private"] is True
     assert by_name["alice/fork-do-projeto"]["manifest_ok"] is False
     assert by_name["alice/fork-do-projeto"]["manifest_error"]
 
@@ -126,7 +136,9 @@ def test_refresh_repos(app_client, monkeypatch):
     import infra.github_import as github_import
 
     monkeypatch.setattr(
-        github_import, "check_manifest", lambda full_name, branch: (True, None)
+        github_import,
+        "check_manifest",
+        lambda full_name, branch, token=None: (True, None),
     )
     response = app_client.post("/api/github/repos/refresh")
     assert response.status_code == 200

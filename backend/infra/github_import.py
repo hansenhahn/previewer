@@ -14,7 +14,9 @@ def refresh_repositories(
     checks: dict[str, tuple[bool, str | None]] = {}
     with ThreadPoolExecutor(max_workers=workers) as pool:
         pending = {
-            pool.submit(checker, row.full_name, row.default_branch): row.full_name
+            pool.submit(
+                checker, row.full_name, row.default_branch, token=token
+            ): row.full_name
             for row in rows
         }
         for future, full_name in pending.items():

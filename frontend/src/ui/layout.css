@@ -998,7 +998,15 @@ body {
 }
 
 .pv-github-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
+}
+
+.pv-github-name wa-icon {
+  font-size: 0.8rem;
+  color: var(--pv-color-text-muted);
 }
 
 .pv-github-meta {

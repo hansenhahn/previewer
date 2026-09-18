@@ -1,12 +1,4 @@
-# github-import Specification
-
-## Purpose
-
-Importar um projeto a partir de um repositório GitHub (público ou privado): listar
-os repositórios da conta, validar o `manifest.json` e baixar apenas os arquivos
-referenciados, mantendo um working copy git esparso e persistente.
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Listar os repositórios da conta (públicos e privados)
 
@@ -36,15 +28,7 @@ silêncio.
 - **THEN** o sistema informa o erro, em vez de exibir uma lista vazia sem
   explicação
 
-### Requirement: Selecionar um repositório
-
-O sistema SHALL permitir escolher um repositório da lista, seja o projeto
-original ou um fork do usuário.
-
-#### Scenario: Escolha do repositório
-
-- **WHEN** o usuário seleciona um repositório da lista
-- **THEN** o sistema prepara o import a partir desse repositório
+## MODIFIED Requirements
 
 ### Requirement: Validar o manifest do repositório
 
@@ -80,40 +64,8 @@ manifest estiver ausente ou inválido.
 - **THEN** ele é indicado como não importável (marca neutra), com o motivo, e não
   pode ser importado
 
-### Requirement: Importar apenas os arquivos referenciados
+## REMOVED Requirements
 
-O sistema SHALL criar o projeto baixando o manifest e somente os arquivos por ele
-referenciados (textos, fontes e backgrounds), e SHALL NOT baixar o repositório
-inteiro.
+### Requirement: Listar os repositórios da conta
 
-#### Scenario: Projeto importado e utilizável
-
-- **WHEN** o import de um repositório válido é concluído
-- **THEN** o projeto é criado, aparece na lista e pode ser aberto com seus textos
-  e prévia
-
-#### Scenario: Arquivos não referenciados
-
-- **WHEN** o repositório contém arquivos que o manifest não referencia
-- **THEN** esses arquivos não são baixados para o projeto
-
-### Requirement: Working copy git persistente
-
-O projeto importado SHALL manter um working copy git esparso e persistente como
-seus dados, de modo que a leitura e a escrita pela API de arquivos continuem
-funcionando e o uso de git (branch/commit depois) seja possível.
-
-#### Scenario: Editar e salvar um arquivo importado
-
-- **WHEN** o usuário edita e salva um arquivo de um projeto importado
-- **THEN** a alteração persiste no working copy, preservado entre reinícios
-
-### Requirement: Import exige sessão
-
-O import SHALL exigir sessão autenticada e o projeto resultante SHALL pertencer ao
-usuário autenticado.
-
-#### Scenario: Import sem sessão
-
-- **WHEN** uma requisição de import chega sem sessão autenticada
-- **THEN** o sistema responde com erro de não autorizado
+### Requirement: Restrição a repositórios públicos

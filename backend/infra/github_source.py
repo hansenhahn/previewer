@@ -1,6 +1,7 @@
 import re
 import subprocess
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
@@ -17,6 +18,7 @@ from infra.ingestion import (
 
 FULL_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$")
 RAW_ROOT = "https://raw.githubusercontent.com"
+API_ROOT = "https://api.github.com"
 
 
 class GitHubSourceError(RuntimeError):
@@ -33,6 +35,7 @@ class GitHubSource:
         self.allow_file = allow_file
         self.timeout = timeout
         self.base_url = base_url.rstrip("/")
+        self._secrets: tuple[str, ...] = ()
 
     def _run(self, args, cwd=None, capture: bool = False) -> bytes:
         try:
@@ -48,14 +51,20 @@ class GitHubSource:
             raise GitHubSourceError("tempo esgotado ao acessar o repositório") from exc
         if result.returncode != 0:
             message = result.stderr.decode("utf-8", "replace").strip()
+            for secret in self._secrets:
+                message = message.replace(secret, "***")
             raise GitHubSourceError(message or "falha na operação git")
         return result.stdout if capture else b""
 
-    def fetch(self, *, full_name: str, default_branch: str, working_copy):
+    def fetch(self, *, full_name: str, default_branch: str, working_copy, token=None):
         if not isinstance(full_name, str) or not FULL_NAME.match(full_name):
             raise GitHubSourceError("repositório inválido")
         target = Path(working_copy)
-        url = f"{self.base_url}/{full_name}.git"
+        self._secrets = (token,) if token else ()
+        if token:
+            url = f"https://x-access-token:{token}@github.com/{full_name}.git"
+        else:
+            url = f"{self.base_url}/{full_name}.git"
         branch = default_branch or "HEAD"
         self._run(
             [
@@ -99,12 +108,23 @@ class GitHubSource:
         return patterns
 
 
-def check_manifest(full_name: str, branch: str, opener=None):
+def check_manifest(full_name: str, branch: str, token=None, opener=None):
     if not isinstance(full_name, str) or not FULL_NAME.match(full_name):
         return (False, "repositório inválido")
     open_fn = urllib.request.urlopen if opener is None else opener
-    url = f"{RAW_ROOT}/{full_name}/{branch or 'HEAD'}/{MANIFEST_NAME}"
-    request = urllib.request.Request(url, headers={"User-Agent": "previewer"})
+    ref = branch or "HEAD"
+    if token:
+        query = urllib.parse.urlencode({"ref": ref})
+        url = f"{API_ROOT}/repos/{full_name}/contents/{MANIFEST_NAME}?{query}"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github.raw",
+            "User-Agent": "previewer",
+        }
+    else:
+        url = f"{RAW_ROOT}/{full_name}/{ref}/{MANIFEST_NAME}"
+        headers = {"User-Agent": "previewer"}
+    request = urllib.request.Request(url, headers=headers)
     try:
         with open_fn(request) as response:
             data = response.read()
@@ -131,6 +151,7 @@ def import_repository(
     default_branch,
     upstream=None,
     base_branch=None,
+    token=None,
 ):
     project_id = uuid.uuid4()
     try:
@@ -139,6 +160,7 @@ def import_repository(
             full_name=full_name,
             default_branch=default_branch,
             working_copy=storage.local_path(owner_id, str(project_id)),
+            token=token,
         )
         project = create_project_for(
             repository,

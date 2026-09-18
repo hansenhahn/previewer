@@ -102,7 +102,13 @@ export function createGithubImport(options: GithubImportOptions): GithubImportHa
     info.className = "pv-github-info";
     const name = document.createElement("div");
     name.className = "pv-github-name";
-    name.textContent = repo.full_name;
+    const label = document.createElement("span");
+    label.textContent = repo.full_name;
+    name.append(label);
+    if (repo.private) {
+      name.append(kit.icon("lock", "privado"));
+      name.title = "repositório privado";
+    }
     const meta = document.createElement("div");
     meta.className = "pv-github-meta";
     const branch = repo.fork ? `fork · ${repo.default_branch}` : repo.default_branch;
